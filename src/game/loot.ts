@@ -61,7 +61,7 @@ export function rollLoot(player: Stats, mob: Mob): Item | undefined {
   if (rand01() > dropChance) return undefined;
 
   const luck = Math.max(0, player.luck);
-  const m = clamp(0.7, 2.0, mob.lootMultipler);
+  const m = clamp(0.7, 2.0, mob.lootMultiplier);
 
   const rare = 18 + luck * 0.2;
   const epic = 3 + luck * 0.05;
