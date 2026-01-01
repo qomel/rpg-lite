@@ -14,6 +14,10 @@ function mobColor(id: string) {
   return map[id] ?? "#DDD";
 }
 
+function rarityClass(r: string) {
+  return `orb orb--${r}`;
+}
+
 export default function App() {
   const {
     player,
@@ -30,10 +34,9 @@ export default function App() {
     statusLabel,
     inventory,
     equipment,
-    inventoryOpen,
-    setInventoryOpen,
     equipItem,
     unequip,
+    expToNext,
   } = useGame();
 
   return (
@@ -72,84 +75,59 @@ export default function App() {
               {player.armor} <span className="dot">•</span> LUCK {player.luck}
             </span>
           </div>
-          {/* LEFT: PLAYER EQ */}
-          <button
-            className="invFab"
-            onClick={() => setInventoryOpen(!inventoryOpen)}
-            aria-label="Inventory"
-          >
-            Inventory
-          </button>
+          {/* EQUIPMENT */}
+          <div className="invBlock">
+            <div className="invTitle">Założone</div>
 
-          {inventoryOpen && (
-            <div className="invPanel">
-              <div className="invPanel__head">
-                <div className="invPanel__title">Ekwipunek</div>
-                <button className="btn" onClick={() => setInventoryOpen(false)}>
-                  Zamknij
-                </button>
-              </div>
+            <div className="orbRow">
+              {(["weapon", "armor", "charm"] as const).map((slot) => {
+                const it = equipment[slot];
+                return (
+                  <div className="orbWrap" key={slot}>
+                    <div className="orbLabel">{slot}</div>
 
-              <div className="invSection">
-                <div className="invSection__title">Założone</div>
-
-                <div className="equipGrid">
-                  {(["weapon", "armor", "charm"] as const).map((slot) => (
-                    <div className="equipSlot" key={slot}>
-                      <div className="equipSlot__label">
-                        {slot.toUpperCase()}
-                      </div>
-
-                      {equipment[slot] ? (
-                        <div className="equipSlot__item">
-                          <div className="itemName">
-                            {equipment[slot]!.name}
-                          </div>
-                          <div className="itemMeta">
-                            {equipment[slot]!.rarity} • {equipment[slot]!.slot}
-                          </div>
-                          <button className="btn" onClick={() => unequip(slot)}>
-                            Zdejmij
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="equipSlot__empty">Brak</div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="invSection">
-                <div className="invSection__title">
-                  Plecak ({inventory.length})
-                </div>
-
-                {inventory.length === 0 ? (
-                  <div className="empty">Brak itemów. Farm loot z mobów.</div>
-                ) : (
-                  <div className="invList">
-                    {inventory.map((it) => (
-                      <div className="invItem" key={it.id}>
-                        <div className="invItem__left">
-                          <div className="itemName">{it.name}</div>
-                          <div className="itemMeta">
-                            {it.rarity} • {it.slot}
-                          </div>
-                        </div>
-                        <button
-                          className="btn btn--primary"
-                          onClick={() => equipItem(it.id)}
-                        >
-                          Załóż
-                        </button>
-                      </div>
-                    ))}
+                    {it ? (
+                      <div
+                        className={rarityClass(it.rarity)}
+                        onDoubleClick={() => unequip(slot)}
+                        title={it.name}
+                        role="button"
+                        tabIndex={0}
+                      />
+                    ) : (
+                      <div className="orb orb--empty" title="Puste" />
+                    )}
                   </div>
-                )}
-              </div>
+                );
+              })}
             </div>
-          )}
+
+            <div className="invHint">Double-click na kółko: zdejmij/załóż.</div>
+          </div>
+
+          {/* BACKPACK */}
+          <div className="invBlock">
+            <div className="invTitle">Plecak ({inventory.length})</div>
+
+            {inventory.length === 0 ? (
+              <div className="empty">Brak itemów. Farm loot z mobów.</div>
+            ) : (
+              <div className="orbRow orbRow--wrap">
+                {inventory.map((it) => (
+                  <div className="orbWrap" key={it.id}>
+                    <div
+                      className={rarityClass(it.rarity)}
+                      onDoubleClick={() => equipItem(it.id)}
+                      title={it.name}
+                      role="button"
+                      tabIndex={0}
+                    />
+                    <div className="orbHoverName">{it.name}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </section>
 
         {/* CENTER: FIGHT */}

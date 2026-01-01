@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createNewPlayer, MOBS } from "./engine";
 import type { FightState, Mob, Equipment, Item, ItemSlot } from "./types";
 import { startFight, attackTurn } from "./combat";
-
+import { expToNext } from "./balance";
 type Phase = "ready" | "inFight" | "cooldown";
 
 export function useGame() {
@@ -176,5 +176,6 @@ export function useGame() {
     setInventoryOpen,
     equipItem,
     unequip,
+    expToNext: expToNext(player.level),
   };
 }
