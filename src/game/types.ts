@@ -20,7 +20,7 @@ export type Mob = {
   expReward: number;
   goldMin: number;
   goldMax: number;
-  lootMultipler: number; // mnożnik do szansy na zdobycie przedmiotu
+  lootMultiplier: number; // mnożnik do szansy na zdobycie przedmiotu
 };
 
 export type Item = {
