@@ -15,7 +15,7 @@ export type Stats = {
 export type Mob = {
   id: string;
   name: string;
-  threatLevel: number; // do obliczenia winChance
+  maxHp: number;
   mobAttack: number;
   expReward: number;
   goldMin: number;
@@ -31,10 +31,18 @@ export type Item = {
 };
 
 export type BattleResult = {
-  win: boolean;
+  finished: boolean;
+  win?: boolean;
   damageTaken: number;
+  mobDamage: number;
   expGained: number;
   goldGained: number;
   droppedItems?: Item;
   log: string[];
+};
+
+export type FightState = {
+  mobId: string;
+  mobHp: number;
+  inProgress: boolean;
 };

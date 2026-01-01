@@ -17,3 +17,7 @@ export function playerPower(strength: number, armor: number): number {
 export function expToNext(level: number): number {
   return 100 + Math.max(0, level - 1) * 50;
 }
+
+export function playerDamage(strength: number): number {
+  return Math.max(1, 2 + strength);
+}

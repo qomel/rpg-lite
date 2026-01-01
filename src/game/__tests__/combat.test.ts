@@ -1,21 +1,23 @@
 import { describe, it, expect } from "vitest";
 import { createNewPlayer, MOBS } from "../engine";
-import { attackMob } from "../combat";
+import { startFight, attackTurn } from "../combat";
 
-describe("combat mechanics", () => {
-  it("player HP never drops below 0", () => {
+describe("turn-based combat", () => {
+  it("mob HP decreases after player attack", () => {
     const p = createNewPlayer();
-    p.hp = 1;
+    const mob = MOBS[0];
+    const fight = startFight(mob);
 
-    const { player } = attackMob(p, MOBS[4]);
-    expect(player.hp).toBeGreaterThanOrEqual(0);
+    const { fight: f2 } = attackTurn(p, fight, mob);
+    expect(f2.mobHp).toBeLessThan(fight.mobHp);
   });
 
-  it("combat always grants EXP and gold", () => {
-    const p = createNewPlayer();
-    const { result } = attackMob(p, MOBS[0]);
+  it("player HP never drops below 0", () => {
+    const p = { ...createNewPlayer(), hp: 1 };
+    const mob = MOBS[4];
+    const fight = startFight(mob);
 
-    expect(result.expGained).toBeGreaterThan(0);
-    expect(result.goldGained).toBeGreaterThan(0);
+    const { player } = attackTurn(p, fight, mob);
+    expect(player.hp).toBeGreaterThanOrEqual(0);
   });
 });

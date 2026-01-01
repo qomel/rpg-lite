@@ -17,7 +17,7 @@ export const MOBS: Mob[] = [
   {
     id: "slime",
     name: "Slime",
-    threatLevel: 4,
+    maxHp: 30,
     mobAttack: 12,
     expReward: 25,
     goldMin: 2,
@@ -27,7 +27,7 @@ export const MOBS: Mob[] = [
   {
     id: "rat",
     name: "Giant Rat",
-    threatLevel: 6,
+    maxHp: 40,
     mobAttack: 14,
     expReward: 30,
     goldMin: 3,
@@ -37,7 +37,7 @@ export const MOBS: Mob[] = [
   {
     id: "bandit",
     name: "Bandit",
-    threatLevel: 10,
+    maxHp: 60,
     mobAttack: 18,
     expReward: 45,
     goldMin: 8,
@@ -47,7 +47,7 @@ export const MOBS: Mob[] = [
   {
     id: "ogre",
     name: "Ogre",
-    threatLevel: 16,
+    maxHp: 80,
     mobAttack: 26,
     expReward: 70,
     goldMin: 14,
@@ -57,7 +57,7 @@ export const MOBS: Mob[] = [
   {
     id: "wyrm",
     name: "Wyrm",
-    threatLevel: 22,
+    maxHp: 120,
     mobAttack: 34,
     expReward: 95,
     goldMin: 22,
@@ -67,7 +67,7 @@ export const MOBS: Mob[] = [
   {
     id: "dragon",
     name: "Dragon",
-    threatLevel: 30,
+    maxHp: 300,
     mobAttack: 45,
     expReward: 150,
     goldMin: 40,
