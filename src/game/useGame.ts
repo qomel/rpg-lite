@@ -31,31 +31,30 @@ export function useGame() {
   useEffect(() => {
     if (phase !== "cooldown") return;
 
+    // start zawsze od 5
     setCooldownLeft(5);
+
     const t = window.setInterval(() => {
       setCooldownLeft((prev) => {
+        // gdy dobijemy do 1 -> kończymy cooldown i robimy revive
         if (prev <= 1) {
           window.clearInterval(t);
+
+          // revive + reset walki + odblokowanie
+          setPlayer((p) => ({ ...p, hp: p.maxHp }));
+          setFight(startFight(selectedMob));
+          setPhase("ready");
+          setLog([`Ocknąłeś się! Spróbuj nie umrzeć ponownie..`]);
+
           return 0;
         }
+
         return prev - 1;
       });
     }, 1000);
 
     return () => window.clearInterval(t);
-  }, [phase]);
-
-  // when cooldown end -> revive + allow selection + reset fight
-  useEffect(() => {
-    if (phase === "cooldown" && cooldownLeft === 0) {
-      // revive
-      setPlayer((p) => ({ ...p, hp: p.maxHp }));
-      // reset fight to selected mob
-      setFight(startFight(selectedMob));
-      setPhase("ready");
-      setLog(["Ocknąłeś się! Spróbuj nie umrzeć ponownie.. "]);
-    }
-  }, [cooldownLeft, phase, selectedMob]);
+  }, [phase, selectedMob]);
 
   function selectMob(mob: Mob) {
     if (selectionLocked) return;
