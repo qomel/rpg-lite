@@ -13,8 +13,8 @@ export function attackMob(
 
   const damageTaken = damageAfterArmor(mob.mobAttack, player.armor);
 
-  log.push("Walczysz z ${mob.name}!");
-  log.push("Otrzymujesz ${damageTaken}");
+  log.push("Walczysz z " + mob.name + "!");
+  log.push("Otrzymujesz " + damageTaken);
 
   // Nagrody za pokonanie moba
 
@@ -22,7 +22,11 @@ export function attackMob(
   const goldGained = randInt(mob.goldMin, mob.goldMax);
 
   log.push(
-    "Zdobywasz ${expGained} punktów doświadczenia i ${goldGained} złota."
+    "Zdobywasz " +
+      expGained +
+      " punktów doświadczenia i " +
+      goldGained +
+      " złota."
   );
 
   // Update HP i GOLD
@@ -44,7 +48,11 @@ export function attackMob(
   const droppedItems = rollLoot(p, mob);
   if (droppedItems) {
     log.push(
-      "Zdobywasz przedmiot: ${droppedItems.name} (Rzadkość: ${droppedItems.rarity})"
+      "Zdobywasz przedmiot: " +
+        droppedItems.name +
+        " (Rzadkość: " +
+        droppedItems.rarity +
+        ")"
     );
   }
 

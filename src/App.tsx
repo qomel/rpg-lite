@@ -1,35 +1,48 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useGame } from "./game/useGame.ts";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const { player, mobs, log, attack } = useGame();
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div style={{ padding: 16, fontFamily: "Arial, sans-serif" }}>
+      <h1>RPG Lite</h1>
+
+      <section>
+        <h2>Gracz</h2>
+        <div>
+          HP: {player.hp} / {player.maxHp}
+        </div>
+        <div>Poziom: {player.level}</div>
+        <div>EXP: {player.exp}</div>
+        <div>Złoto: {player.gold}</div>
+        <div>
+          STR: {player.strenght} | ARM: {player.armor} | LUCK: {player.luck}
+        </div>
+      </section>
+
+      <section>
+        <h2>Mobs</h2>
+        {mobs.map((m) => (
+          <button
+            key={m.id}
+            onClick={() => attack(m)}
+            style={{ display: "block", margin: "4px 0" }}
+          >
+            Attack {m.name}
+          </button>
+        ))}
+      </section>
+
+      <section>
+        <h2>Log Walki</h2>
+        <ul>
+          {log.map((line, i) => (
+            <li key={i}>{line}</li>
+          ))}
+        </ul>
+      </section>
+    </div>
+  );
 }
 
-export default App
+export default App;

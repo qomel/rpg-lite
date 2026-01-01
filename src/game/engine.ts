@@ -64,4 +64,14 @@ export const MOBS: Mob[] = [
     goldMax: 40,
     lootMultiplier: 1.5,
   },
+  {
+    id: "dragon",
+    name: "Dragon",
+    threatLevel: 30,
+    mobAttack: 45,
+    expReward: 150,
+    goldMin: 40,
+    goldMax: 80,
+    lootMultiplier: 2.0,
+  },
 ];
