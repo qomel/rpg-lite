@@ -3,21 +3,40 @@ import { useGame } from "./game/useGame";
 import { useState } from "react";
 import { BOSSES } from "./game/engine";
 
-function mobColor(id: string) {
-  // placeholder 52x52 "img" jako kolor
-  const map: Record<string, string> = {
-    slime: "#7CFF8A",
-    rat: "#B9B9B9",
-    bandit: "#FFB36B",
-    ogre: "#8FD3FF",
-    wyrm: "#D7A7FF",
-    dragon: "#FF7C7C",
-  };
-  return map[id] ?? "#DDD";
-}
-
 function rarityClass(r: string) {
   return `orb orb--${r}`;
+}
+
+function mobColor(key: string) {
+  const map: Record<string, string> = {
+    // Kolory Mobów (01-20)
+    slime: "#7CFF8A",
+    rat: "#B9B9B9",
+    bat: "#A18F7C",
+    spider: "#9B7CFF",
+    wolf: "#7C9BFF",
+    bandit: "#FFB36B",
+    skeleton: "#E1E1E1",
+    ghoul: "#7C9A71",
+    mage: "#7CFFEE",
+    ogre: "#8FD3FF",
+    wraith: "#B3B3B3",
+    knight: "#FFD700",
+    golem: "#8B4513",
+    harpy: "#FF7CB9",
+    wyrm: "#D7A7FF",
+    cultist: "#800000",
+    assassin: "#36454F",
+    wyvern: "#556B2F",
+    demon: "#FF4500",
+    ancient: "#4682B4",
+
+    // Kolory Bossów (według pola icon)
+    boss1: "#111", // Swamp King
+    boss2: "#222", // Iron Beast
+    boss3: "#333", // Void Wyrm
+  };
+  return map[key] ?? "#DDD";
 }
 
 export default function App() {
@@ -39,6 +58,7 @@ export default function App() {
     equipItem,
     unequip,
     expToNext,
+    maxAllowedMobLevel,
   } = useGame();
 
   const [enemyTab, setEnemyTab] = useState<"mobs" | "boss">("mobs");
@@ -250,31 +270,46 @@ export default function App() {
             <div className="moblist">
               {enemies.map((m) => {
                 const active = m.id === selectedMob.id;
-                const disabled = selectionLocked;
+
+                const lockedByLevel = m.level > maxAllowedMobLevel; // 6.3
+                const disabled = selectionLocked || lockedByLevel; // 6.3
+
+                const title = selectionLocked
+                  ? "Zakończ walkę, aby zmienić przeciwnika."
+                  : lockedByLevel
+                  ? `Za wysoki poziom. Masz L${player.level}. Możesz wybrać przeciwnika max L${maxAllowedMobLevel}.`
+                  : `Wybierz ${m.name}`;
 
                 return (
                   <button
                     key={m.id}
-                    className={`mobrow ${active ? "mobrow--active" : ""}`}
+                    className={`mobrow ${active ? "mobrow--active" : ""} ${
+                      lockedByLevel ? "mobrow--locked" : ""
+                    }`}
                     onClick={() => selectMob(m)}
                     disabled={disabled}
-                    title={
-                      disabled
-                        ? "Zakończ walkę, aby zmienić moba."
-                        : `Wybierz ${m.name}`
-                    }
+                    title={title}
                   >
                     <div
                       className="mobrow__img"
-                      style={{ background: mobColor(m.id) }}
+                      style={{ background: mobColor(m.icon) }}
                       aria-hidden="true"
                     />
                     <div className="mobrow__body">
-                      <div className="mobrow__name">{m.name}</div>
+                      <div className="mobrow__name">
+                        {m.name} <span className="badgeLvl">lvl {m.level}</span>
+                      </div>
+
                       <div className="mobrow__meta">
                         HP: {m.maxHp} <span className="dot">•</span> ATK:{" "}
                         {m.mobAttack}
                       </div>
+
+                      {lockedByLevel && (
+                        <div className="mobrow__req">
+                          Wymaga: max L{maxAllowedMobLevel}
+                        </div>
+                      )}
                     </div>
                   </button>
                 );

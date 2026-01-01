@@ -357,3 +357,24 @@
 .orbWrap:hover .orbHoverName {
   opacity: 1;
 }
+
+.mobrow--locked {
+  opacity: 0.6;
+}
+
+.badgeLvl {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid #e6e6e6;
+  background: #f7f7f7;
+}
+
+.mobrow__req {
+  margin-top: 4px;
+  font-size: 12px;
+  opacity: 0.75;
+}

@@ -130,6 +130,15 @@ export function useGame() {
   function selectMob(mob: Mob) {
     if (selectionLocked) return;
 
+    if (mob.level > maxMobLevelAllowed(player.level)) {
+      setLog([
+        `Za wysoki poziom! Masz L${
+          player.level
+        }. Możesz wybrać przeciwnika max L${maxMobLevelAllowed(player.level)}.`,
+      ]);
+      return;
+    }
+
     const maxAllowed = maxMobLevelAllowed(player.level);
     if (mob.level > maxAllowed) {
       setLog([
@@ -229,5 +238,6 @@ export function useGame() {
     expToNext: expToNext(player.level),
     inventory: gear.inventory,
     equipment: gear.equipment,
+    maxAllowedMobLevel: maxMobLevelAllowed(player.level),
   };
 }
