@@ -51,10 +51,10 @@ export function attackTurn(
 
     const droppedItems = rollLoot(p, mob);
 
-    log.push(
-      `Pokonałeś ${mob.name}! Zdobywasz ${expGained} punktów doświadczenia i ${goldGained} sztuk złota.`
-    );
+    log.push(`Pokonałeś ${mob.name}! (${0}/${mob.maxHp} HP)`);
+    log.push(`Zdobywasz ${expGained} EXP i ${goldGained} gold.`);
     log.push(...leveled.log);
+
     if (droppedItems)
       log.push(
         `Zdobywasz przedmiot: ${droppedItems.name} (${droppedItems.rarity}).`
@@ -63,7 +63,7 @@ export function attackTurn(
     const result: BattleResult = {
       finished: true,
       win: true,
-      damageTaken: 0,
+      damageTaken: pDmg,
       mobDamage: 0,
       expGained,
       goldGained,
@@ -73,7 +73,7 @@ export function attackTurn(
 
     return {
       player: p,
-      fight: { ...fight, inProgress: false },
+      fight: { ...fight, mobHp: 0, inProgress: false }, // kluczowe: mobHp=0
       result,
     };
   }
