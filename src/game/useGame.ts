@@ -40,24 +40,56 @@ export function useGame() {
     return () => window.clearInterval(t);
   }, [phase]);
 
+  // when cooldown end -> revive + allow selection + reset fight
+  useEffect(() => {
+    if (phase === "cooldown" && cooldownLeft === 0) {
+      // revive
+      setPlayer((p) => ({ ...p, hp: p.maxHp }));
+      // reset fight to selected mob
+      setFight(startFight(selectedMob));
+      setPhase("ready");
+      setLog(["Ocknąłeś się! Spróbuj nie umrzeć ponownie.. "]);
+    }
+  }, [cooldownLeft, phase, selectedMob]);
+
   function selectMob(mob: Mob) {
+    if (selectionLocked) return;
+
     setSelectedMobId(mob.id);
     setFight(startFight(mob));
-    setLog([`Rozpoczęto walkę z ${mob.name}.`]);
+    setPhase("ready");
+    setLog([`Wybrano: ${mob.name}. Kliknij "Atakuj, żeby rozpoczać walkę`]);
   }
 
   function attack() {
+    if (!canAttack) return;
+
+    // after first attack lock in fight
+    if (phase === "ready") {
+      setPhase("inFight");
+    }
+
     const res = attackTurn(player, fight, selectedMob);
     setPlayer(res.player);
     setFight(res.fight);
     setLog(res.result.log);
+
+    // if fight is over
+    if (res.result.finished) {
+      if (res.result.win === true) {
+        // win: unlocked mob pick
+        setPhase("ready");
+      } else if (res.result.win === false) {
+        // lose: 5s lock mob pick and blur on it
+        setPhase("cooldown");
+      }
+    }
   }
 
-  function resetPlayer() {
-    const p = createNewPlayer();
-    setPlayer(p);
-    setFight(startFight(selectedMob));
-    setLog([`Postać została zresetowana.`]);
+  function getStatusLabel(): string {
+    if (phase === "cooldown") return `Pokonany - blokada ${cooldownLeft}s`;
+    if (phase === "inFight") return `Walka w toku`;
+    return "Gotowy";
   }
 
   return {
@@ -66,8 +98,12 @@ export function useGame() {
     selectedMob,
     fight,
     log,
-    attack,
     selectMob,
-    resetPlayer,
+    attack,
+    phase,
+    cooldownLeft,
+    selectionLocked,
+    canAttack,
+    statusLabel: getStatusLabel(),
   };
 }
