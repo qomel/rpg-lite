@@ -25,7 +25,7 @@ export function useGame() {
   );
 
   const selectionLocked = phase === "inFight" || phase === "cooldown";
-  const canAttack = phase !== "cooldown" && player.hp > 0 && fight.mobHp > 0;
+  const canAttack = !turnLocked && phase !== "cooldown" && player.hp > 0; // Atakuj dostępny także po zakończeniu walki (respawn na klik)
 
   // start cooldown timer
   useEffect(() => {
@@ -66,6 +66,7 @@ export function useGame() {
     setLog([`Wybrano: ${mob.name}. Kliknij "Atakuj, żeby rozpoczać walkę`]);
   }
 
+  // button Atakuj
   function attack() {
     // gurady anyspam click
     if (turnLockRef.current) return;
@@ -73,17 +74,22 @@ export function useGame() {
     setTurnLocked(true);
 
     try {
-      // jeśli z jakiegoś powodu walka już nie trwa, nie wchodź w turę
-      if (!fight.inProgress || fight.mobHp <= 0 || player.hp <= 0) {
-        setPhase("ready");
-        setLog(["Walka jest zakończona"]);
-        return;
+      if (phase === "cooldown") return;
+
+      if (player.hp <= 0) return;
+
+      // Jeśli walka jest zakończona (mob dead) i jesteśmy w READY,
+      // to klik "Atakuj" ma rozpocząć nową walkę z tym samym mobem.
+      let fightToUse = fight;
+      if (!fight.inProgress || fight.mobHp <= 0) {
+        fightToUse = startFight(selectedMob);
+        setFight(fightToUse);
       }
 
       // after first atack lock in fight
       if (phase === "ready") setPhase("inFight");
 
-      const res = attackTurn(player, fight, selectedMob);
+      const res = attackTurn(player, fightToUse, selectedMob);
       setPlayer(res.player);
       setFight(res.fight);
       setLog(res.result.log);
