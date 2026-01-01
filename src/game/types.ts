@@ -1,5 +1,6 @@
 // Zmienna typu Rarity określa rzadkość przedmiotu w grze.
 export type Rarity = "common" | "uncommon" | "rare" | "epic" | "legendary";
+export type ItemSlot = "weapon" | "armor" | "charm";
 
 export type Stats = {
   maxHp: number;
@@ -27,6 +28,7 @@ export type Item = {
   id: string;
   name: string;
   rarity: Rarity;
+  slot: ItemSlot;
   sellPrice: number;
 };
 
@@ -45,4 +47,10 @@ export type FightState = {
   mobId: string;
   mobHp: number;
   inProgress: boolean;
+};
+
+export type Equipment = {
+  weapon?: Item;
+  armor?: Item;
+  charm?: Item;
 };

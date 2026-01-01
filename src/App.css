@@ -269,3 +269,111 @@
     min-width: unset;
   }
 }
+
+.invFab {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  border-radius: 999px;
+  padding: 10px 14px;
+  border: 1px solid #111;
+  background: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.invFab:hover {
+  background: #f6f6f6;
+}
+
+.invPanel {
+  position: fixed;
+  right: 18px;
+  bottom: 64px;
+  width: 360px;
+  max-height: 70vh;
+  overflow: auto;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  background: #fff;
+  padding: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+.invPanel__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.invPanel__title {
+  font-weight: 900;
+  font-size: 16px;
+}
+
+.invSection {
+  margin-top: 12px;
+}
+
+.invSection__title {
+  font-weight: 900;
+  margin-bottom: 8px;
+}
+
+.equipGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.equipSlot {
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.equipSlot__label {
+  font-size: 12px;
+  opacity: 0.7;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.equipSlot__empty {
+  opacity: 0.7;
+}
+
+.equipSlot__item .btn {
+  margin-top: 8px;
+}
+
+.invList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.invItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.invItem__left {
+  min-width: 0;
+}
+
+.itemName {
+  font-weight: 900;
+}
+
+.itemMeta {
+  opacity: 0.75;
+  font-size: 12px;
+}

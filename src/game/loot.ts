@@ -1,4 +1,4 @@
-import type { Item, Mob, Rarity, Stats } from "./types";
+import type { Item, Mob, Rarity, Stats, ItemSlot } from "./types";
 import { clamp } from "./balance";
 import { pickByWeight, rand01 } from "./rng";
 
@@ -51,6 +51,10 @@ function nameFor(rarity: Rarity): string {
   return pool[idx];
 }
 
+function slotFor(): ItemSlot {
+  const slots: ItemSlot[] = ["weapon", "armor", "charm"];
+  return slots[Math.floor(rand01() * slots.length)];
+}
 // Loot rarity
 // base: common 80, rare 18, epix 3, legendary 0.5
 // luck increases chance for better loot
@@ -86,6 +90,7 @@ export function rollLoot(player: Stats, mob: Mob): Item | undefined {
     name: nameFor(chosen),
     rarity: chosen,
     sellPrice: sellPriceFor(chosen),
+    slot: slotFor(),
   };
   return item;
 }

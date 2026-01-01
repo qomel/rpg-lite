@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createNewPlayer, MOBS } from "./engine";
-import type { FightState, Mob } from "./types";
+import type { FightState, Mob, Equipment, Item, ItemSlot } from "./types";
 import { startFight, attackTurn } from "./combat";
 
 type Phase = "ready" | "inFight" | "cooldown";
@@ -11,7 +11,9 @@ export function useGame() {
   const [fight, setFight] = useState<FightState>(() => startFight(MOBS[0]));
   const [phase, setPhase] = useState<Phase>("ready");
   const [log, setLog] = useState<string[]>([]);
-
+  const [inventory, setInventory] = useState<Item[]>([]);
+  const [equipment, setEquipment] = useState<Equipment>({});
+  const [inventoryOpen, setInventoryOpen] = useState(false);
   // cooldown afer death
   const [cooldownLeft, setCooldownLeft] = useState<number>(0);
 
@@ -93,6 +95,10 @@ export function useGame() {
       setFight(res.fight);
       setLog(res.result.log);
 
+      if (res.result.droppedItems) {
+        setInventory((prev) => [res.result.droppedItems as Item, ...prev]);
+      }
+
       // domykanie po zakończeniu
       if (res.result.finished) {
         if (res.result.win === true) {
@@ -119,6 +125,38 @@ export function useGame() {
     return "Gotowy";
   }
 
+  function equipItem(itemId: string) {
+    setInventory((prevInv) => {
+      const item = prevInv.find((x) => x.id === itemId);
+      if (!item) return prevInv;
+
+      setEquipment((prevEq) => {
+        const slot = item.slot as ItemSlot;
+        const currentylyEquipped = prevEq[slot];
+
+        // Zdejmowanie itemy z slota
+        if (currentylyEquipped) {
+          setInventory((inv2) => [currentylyEquipped, ...inv2]);
+        }
+
+        return { ...prevEq, [slot]: item };
+      });
+      return prevInv.filter((x) => x.id !== itemId);
+    });
+  }
+
+  function unequip(slot: ItemSlot) {
+    setEquipment((prevEq) => {
+      const item = prevEq[slot];
+      if (!item) return prevEq;
+
+      setInventory((prevInv) => [item, ...prevInv]);
+      const next = { ...prevEq };
+      delete next[slot];
+      return next;
+    });
+  }
+
   return {
     player,
     mobs: MOBS,
@@ -132,5 +170,11 @@ export function useGame() {
     selectionLocked,
     canAttack,
     statusLabel: getStatusLabel(),
+    inventory,
+    equipment,
+    inventoryOpen,
+    setInventoryOpen,
+    equipItem,
+    unequip,
   };
 }
