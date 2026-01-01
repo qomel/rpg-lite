@@ -1,91 +1,62 @@
-import type { Item, Mob, Rarity, Stats } from "./types";
+import type { Item, Mob, Stats } from "./types";
 import { clamp } from "./balance";
 import { pickByWeight, rand01 } from "./rng";
+import { LOOT_TABLES, rarityLeq } from "./lootTables";
 
-const COMMON_ITEMS: string[] = [
-  "Wooden Sword",
-  "Cloth Armor",
-  "Health Potion",
-  "Mana Potion",
-];
-
-const RARE_ITEMS: string[] = [
-  "Iron Sword",
-  "Chainmail Armor",
-  "Greater Health Potion",
-  "Greater Mana Potion",
-];
-
-const EPIC_ITEMS: string[] = [
-  "Steel Sword",
-  "Plate Armor",
-  "Superior Health Potion",
-  "Superior Mana Potion",
-];
-
-const LEGENDARY_ITEMS: string[] = [
-  "Excalibur",
-  "Dragon Scale Armor",
-  "Elixir of Immortality",
-  "Philosopher's Stone",
-];
-
-function sellPriceFor(rarity: Rarity): number {
+function sellPriceFor(rarity: Item["rarity"]): number {
   if (rarity === "common") return 10;
-  if (rarity === "rare") return 50;
-  if (rarity === "epic") return 200;
+  if (rarity === "uncommon") return 25;
+  if (rarity === "rare") return 60;
+  if (rarity === "epic") return 220;
   if (rarity === "legendary") return 1000;
   return 0;
 }
 
-function nameFor(rarity: Rarity): string {
-  const pool =
-    rarity === "common"
-      ? COMMON_ITEMS
-      : rarity === "rare"
-      ? RARE_ITEMS
-      : rarity === "epic"
-      ? EPIC_ITEMS
-      : LEGENDARY_ITEMS;
-  const idx = Math.floor(rand01() * pool.length);
-  return pool[idx];
-}
-
-// Loot rarity
-// base: common 80, rare 18, epix 3, legendary 0.5
-// luck increases chance for better loot
-
 export function rollLoot(player: Stats, mob: Mob): Item | undefined {
-  // drop chance
-  const dropChance = clamp(0.1, 0.85, 0.3 + player.luck * 0.01);
+  const table = LOOT_TABLES[mob.lootTableId];
+  if (!table) return undefined;
+
+  // drop chance (luck wpływa, ale cap rarity trzyma balans)
+  const dropChance = clamp(
+    0.1,
+    0.85,
+    0.25 + player.luck * 0.01 + (mob.kind === "boss" ? 0.15 : 0)
+  );
   if (rand01() > dropChance) return undefined;
 
-  const luck = Math.max(0, player.luck);
-  const m = clamp(0.7, 2.0, mob.lootMultiplier);
+  // wybieramy tylko wpisy <= maxRarity tabeli
+  const entries = table.entries.filter((e) =>
+    rarityLeq(e.rarity, table.maxRarity)
+  );
+  if (entries.length === 0) return undefined;
 
-  const rare = 18 + luck * 0.2;
-  const epic = 3 + luck * 0.05;
-  const legendary = 0.5 + luck * 0.01;
-  let common = 100 - rare - epic - legendary;
+  // luck lekko przesuwa w stronę rzadszych w obrębie table
+  const weights = entries.map((e) => {
+    const rarityBoost =
+      e.rarity === "common"
+        ? 1
+        : e.rarity === "uncommon"
+        ? 1 + player.luck * 0.01
+        : e.rarity === "rare"
+        ? 1 + player.luck * 0.015
+        : e.rarity === "epic"
+        ? 1 + player.luck * 0.02
+        : 1 + player.luck * 0.025;
 
-  const rareAdj = rare * m;
-  const epicAdj = epic * m;
-  const legendaryAdj = legendary * m;
-  const total = common + rareAdj + epicAdj + legendaryAdj;
+    const bossBoost = mob.kind === "boss" ? 1.15 : 1;
+    return { entry: e, weight: e.weight * rarityBoost * bossBoost };
+  });
 
-  const weights = [
-    { rarity: "common" as const, weight: common / total },
-    { rarity: "rare" as const, weight: rareAdj / total },
-    { rarity: "epic" as const, weight: epicAdj / total },
-    { rarity: "legendary" as const, weight: legendaryAdj / total },
-  ];
+  const chosen = pickByWeight(weights).entry;
 
-  const chosen = pickByWeight(weights).rarity;
   const item: Item = {
     id: crypto.randomUUID(),
-    name: nameFor(chosen),
-    rarity: chosen,
-    sellPrice: sellPriceFor(chosen),
+    name: chosen.name,
+    rarity: chosen.rarity,
+    slot: chosen.slot,
+    requiredLevel: chosen.requiredLevel,
+    sellPrice: sellPriceFor(chosen.rarity),
   };
+
   return item;
 }

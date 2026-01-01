@@ -21,3 +21,23 @@ export function expToNext(level: number): number {
 export function playerDamage(strength: number): number {
   return Math.max(1, 2 + strength);
 }
+
+export function expRewardForMob(mobLevel: number): number {
+  // prosta krzywa
+  // lvl1 ~ 12, lvl10 ~ 55, lvl20 ~ 105
+  return Math.round(10 + mobLevel * 4.5);
+}
+
+export function goldRewardForMob(mobLevel: number): {
+  min: number;
+  max: number;
+} {
+  // lvl1 ~ 2-6, lvl10 ~ 12-22 itd.
+  const min = Math.max(1, Math.round(1 + mobLevel * 1.2));
+  const max = Math.max(min + 1, Math.round(4 + mobLevel * 1.8));
+  return { min, max };
+}
+
+export function maxMobLevelAllowed(playerLevel: number): number {
+  return playerLevel + (6 + Math.floor(playerLevel / 3));
+}

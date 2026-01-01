@@ -1,5 +1,10 @@
 import type { BattleResult, FightState, Mob, Stats } from "./types";
-import { damageAfterArmor, playerDamage as calcPlayerDamage } from "./balance";
+import {
+  damageAfterArmor,
+  playerDamage as calcPlayerDamage,
+  expRewardForMob,
+  goldRewardForMob,
+} from "./balance";
 import { randInt } from "./rng";
 import { rollLoot } from "./loot";
 import { applyExpAndLevelUp } from "./level";
@@ -42,8 +47,9 @@ export function attackTurn(
   // If mob is defeated => end fight, give rewards
 
   if (newMobHp === 0) {
-    const expGained = mob.expReward;
-    const goldGained = randInt(mob.goldMin, mob.goldMax);
+    const expGained = expRewardForMob(mob.level);
+    const goldRange = goldRewardForMob(mob.level);
+    const goldGained = randInt(goldRange.min, goldRange.max);
 
     let p: Stats = { ...player, gold: player.gold + goldGained };
     const leveled = applyExpAndLevelUp(p, expGained);
@@ -51,10 +57,10 @@ export function attackTurn(
 
     const droppedItems = rollLoot(p, mob);
 
-    log.push(
-      `Pokonałeś ${mob.name}! Zdobywasz ${expGained} punktów doświadczenia i ${goldGained} sztuk złota.`
-    );
+    log.push(`Pokonałeś ${mob.name}! (${0}/${mob.maxHp} HP)`);
+    log.push(`Zdobywasz ${expGained} EXP i ${goldGained} gold.`);
     log.push(...leveled.log);
+
     if (droppedItems)
       log.push(
         `Zdobywasz przedmiot: ${droppedItems.name} (${droppedItems.rarity}).`
@@ -63,7 +69,7 @@ export function attackTurn(
     const result: BattleResult = {
       finished: true,
       win: true,
-      damageTaken: 0,
+      damageTaken: pDmg,
       mobDamage: 0,
       expGained,
       goldGained,
@@ -73,7 +79,7 @@ export function attackTurn(
 
     return {
       player: p,
-      fight: { ...fight, inProgress: false },
+      fight: { ...fight, mobHp: 0, inProgress: false }, // kluczowe: mobHp=0
       result,
     };
   }
