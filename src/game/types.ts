@@ -13,15 +13,22 @@ export type Stats = {
   gold: number;
 };
 
+export type MobKind = "mob" | "boss";
+
 export type Mob = {
   id: string;
   name: string;
+  level: number;
   maxHp: number;
   mobAttack: number;
   expReward: number;
   goldMin: number;
   goldMax: number;
   lootMultiplier: number; // mnożnik do szansy na zdobycie przedmiotu
+
+  kind: MobKind;
+  icon: string;
+  lootTableId: string;
 };
 
 export type Item = {
@@ -30,6 +37,7 @@ export type Item = {
   rarity: Rarity;
   slot: ItemSlot;
   sellPrice: number;
+  requiredLevel: number;
 };
 
 export type BattleResult = {

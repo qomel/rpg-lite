@@ -2,7 +2,7 @@ import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { createNewPlayer, MOBS } from "./engine";
 import type { FightState, Mob, Equipment, Item, ItemSlot } from "./types";
 import { startFight, attackTurn } from "./combat";
-import { expToNext } from "./balance";
+import { expToNext, maxMobLevelAllowed } from "./balance";
 type Phase = "ready" | "inFight" | "cooldown";
 
 type GearState = {
@@ -130,6 +130,12 @@ export function useGame() {
   function selectMob(mob: Mob) {
     if (selectionLocked) return;
 
+    const maxAllowed = maxMobLevelAllowed(player.level);
+    if (mob.level > maxAllowed) {
+      setLog([
+        `Za wysoki poziom! Masz L${player.level}. Możesz walczyć max z L${maxAllowed}.`,
+      ]);
+    }
     setSelectedMobId(mob.id);
     setFight(startFight(mob));
     setPhase("ready");
