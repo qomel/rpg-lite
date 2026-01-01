@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createNewPlayer, MOBS } from "./engine";
 import type { FightState, Mob } from "./types";
 import { startFight, attackTurn } from "./combat";
@@ -12,7 +12,12 @@ export function useGame() {
   const [phase, setPhase] = useState<Phase>("ready");
   const [log, setLog] = useState<string[]>([]);
 
+  // cooldown afer death
   const [cooldownLeft, setCooldownLeft] = useState<number>(0);
+
+  // blokda przed spam-click
+  const turnLockRef = useRef(false);
+  const [turnLocked, setTurnLocked] = useState(false);
 
   const selectedMob: Mob = useMemo(
     () => MOBS.find((m) => m.id === selectedMobId) ?? MOBS[0],
@@ -62,27 +67,44 @@ export function useGame() {
   }
 
   function attack() {
-    if (!canAttack) return;
+    // gurady anyspam click
+    if (turnLockRef.current) return;
+    turnLockRef.current = true;
+    setTurnLocked(true);
 
-    // after first attack lock in fight
-    if (phase === "ready") {
-      setPhase("inFight");
-    }
-
-    const res = attackTurn(player, fight, selectedMob);
-    setPlayer(res.player);
-    setFight(res.fight);
-    setLog(res.result.log);
-
-    // if fight is over
-    if (res.result.finished) {
-      if (res.result.win === true) {
-        // win: unlocked mob pick
+    try {
+      // jeśli z jakiegoś powodu walka już nie trwa, nie wchodź w turę
+      if (!fight.inProgress || fight.mobHp <= 0 || player.hp <= 0) {
         setPhase("ready");
-      } else if (res.result.win === false) {
-        // lose: 5s lock mob pick and blur on it
-        setPhase("cooldown");
+        setLog(["Walka jest zakończona"]);
+        return;
       }
+
+      // after first atack lock in fight
+      if (phase === "ready") setPhase("inFight");
+
+      const res = attackTurn(player, fight, selectedMob);
+      setPlayer(res.player);
+      setFight(res.fight);
+      setLog(res.result.log);
+
+      // domykanie po zakończeniu
+      if (res.result.finished) {
+        if (res.result.win === true) {
+          setPhase("ready");
+        } else if (res.result.win === false) {
+          setPhase("cooldown");
+        } else {
+          // If comabt is finished but there is no win/lose return to ready
+          setPhase("ready");
+        }
+      }
+    } finally {
+      // zwolnij blokadę w następnym ticku, żeby nie dopuścić do double fire
+      setTimeout(() => {
+        turnLockRef.current = false;
+        setTurnLocked(false);
+      }, 0);
     }
   }
 
