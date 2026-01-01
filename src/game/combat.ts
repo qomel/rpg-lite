@@ -36,7 +36,7 @@ export function attackTurn(
   const pDmg = calcPlayerDamage(player.strenght);
   let newMobHp = Math.max(0, fight.mobHp - pDmg);
   log.push(
-    `Zaatakowałeś ${mob.name} i zadałeś ${pDmg} obrażeń. (4{newMobHp}/${mob.maxHp} HP)`
+    `Zaatakowałeś ${mob.name} i zadałeś ${pDmg} obrażeń. (${newMobHp}/${mob.maxHp} HP)`
   );
 
   // If mob is defeated => end fight, give rewards
