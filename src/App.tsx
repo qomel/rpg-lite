@@ -61,6 +61,10 @@ export default function App() {
           <div className="kv">
             <span className="kv__k">Level</span>
             <span className="kv__v">{player.level}</span>
+            <span className="kv__k">EXP</span>
+            <span className="kv__v">
+              {player.exp} / {expToNext}
+            </span>
           </div>
 
           <div className="kv">
@@ -87,15 +91,29 @@ export default function App() {
                     <div className="orbLabel">{slot}</div>
 
                     {it ? (
-                      <div
-                        className={rarityClass(it.rarity)}
-                        onDoubleClick={() => unequip(slot)}
-                        title={it.name}
-                        role="button"
-                        tabIndex={0}
-                      />
+                      <>
+                        <div
+                          className={rarityClass(it.rarity)}
+                          onDoubleClick={() => unequip(slot)}
+                          role="button"
+                          tabIndex={0}
+                          aria-label={`${it.name}`}
+                        />
+                        <div className="orbHoverName">
+                          <div className="tt__name">{it.name}</div>
+                          <div className="tt__meta">
+                            {it.rarity} • {it.slot}
+                          </div>
+                        </div>
+                      </>
                     ) : (
-                      <div className="orb orb--empty" title="Puste" />
+                      <>
+                        <div className="orb orb--empty" />
+                        <div className="orbHoverName">
+                          <div className="tt__name">Puste</div>
+                          <div className="tt__meta">{slot}</div>
+                        </div>
+                      </>
                     )}
                   </div>
                 );
@@ -118,11 +136,16 @@ export default function App() {
                     <div
                       className={rarityClass(it.rarity)}
                       onDoubleClick={() => equipItem(it.id)}
-                      title={it.name}
                       role="button"
                       tabIndex={0}
+                      aria-label={`${it.name}`}
                     />
-                    <div className="orbHoverName">{it.name}</div>
+                    <div className="orbHoverName">
+                      <div className="tt__name">{it.name}</div>
+                      <div className="tt__meta">
+                        {it.rarity} • {it.slot}
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
