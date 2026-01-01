@@ -18,14 +18,10 @@ export type MobKind = "mob" | "boss";
 export type Mob = {
   id: string;
   name: string;
+
   level: number;
   maxHp: number;
   mobAttack: number;
-  expReward: number;
-  goldMin: number;
-  goldMax: number;
-  lootMultiplier: number; // mnożnik do szansy na zdobycie przedmiotu
-
   kind: MobKind;
   icon: string;
   lootTableId: string;

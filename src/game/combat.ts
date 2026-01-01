@@ -1,5 +1,10 @@
 import type { BattleResult, FightState, Mob, Stats } from "./types";
-import { damageAfterArmor, playerDamage as calcPlayerDamage } from "./balance";
+import {
+  damageAfterArmor,
+  playerDamage as calcPlayerDamage,
+  expRewardForMob,
+  goldRewardForMob,
+} from "./balance";
 import { randInt } from "./rng";
 import { rollLoot } from "./loot";
 import { applyExpAndLevelUp } from "./level";
@@ -42,8 +47,9 @@ export function attackTurn(
   // If mob is defeated => end fight, give rewards
 
   if (newMobHp === 0) {
-    const expGained = mob.expReward;
-    const goldGained = randInt(mob.goldMin, mob.goldMax);
+    const expGained = expRewardForMob(mob.level);
+    const goldRange = goldRewardForMob(mob.level);
+    const goldGained = randInt(goldRange.min, goldRange.max);
 
     let p: Stats = { ...player, gold: player.gold + goldGained };
     const leveled = applyExpAndLevelUp(p, expGained);

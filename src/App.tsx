@@ -1,5 +1,7 @@
 import "./App.css";
 import { useGame } from "./game/useGame";
+import { useState } from "react";
+import { BOSSES } from "./game/engine";
 
 function mobColor(id: string) {
   // placeholder 52x52 "img" jako kolor
@@ -38,6 +40,9 @@ export default function App() {
     unequip,
     expToNext,
   } = useGame();
+
+  const [enemyTab, setEnemyTab] = useState<"mobs" | "boss">("mobs");
+  const enemies = enemyTab === "mobs" ? mobs : BOSSES;
 
   return (
     <div className="app">
@@ -207,10 +212,26 @@ export default function App() {
         {/* RIGHT: MOBS LIST */}
         <aside className="panel">
           <div className="panel__head">
-            <h2 className="panel__title">Mobs</h2>
+            <div className="tabs">
+              <button
+                className={`tab ${enemyTab === "mobs" ? "tab--active" : ""}`}
+                onClick={() => setEnemyTab("mobs")}
+              >
+                Mobs
+              </button>
+              <button
+                className={`tab ${enemyTab === "boss" ? "tab--active" : ""}`}
+                onClick={() => setEnemyTab("boss")}
+              >
+                Boss
+              </button>
+            </div>
+
             <p className="panel__hint">
               {selectionLocked
-                ? "Nie możesz zmienić moba w trakcie walki."
+                ? "Nie możesz zmienić przeciwnika w trakcie walki."
+                : enemyTab === "boss"
+                ? "Bossy są znacznie silniejsze."
                 : "Wybierz moba, żeby rozpocząć walkę."}
             </p>
           </div>
@@ -227,7 +248,7 @@ export default function App() {
             )}
 
             <div className="moblist">
-              {mobs.map((m) => {
+              {enemies.map((m) => {
                 const active = m.id === selectedMob.id;
                 const disabled = selectionLocked;
 
@@ -252,12 +273,7 @@ export default function App() {
                       <div className="mobrow__name">{m.name}</div>
                       <div className="mobrow__meta">
                         HP: {m.maxHp} <span className="dot">•</span> ATK:{" "}
-                        {m.mobAttack} <span className="dot">•</span> EXP:{" "}
-                        {m.expReward}
-                      </div>
-                      <div className="mobrow__sub">
-                        Gold: {m.goldMin}-{m.goldMax}{" "}
-                        <span className="dot">•</span> Loot x{m.lootMultiplier}
+                        {m.mobAttack}
                       </div>
                     </div>
                   </button>
