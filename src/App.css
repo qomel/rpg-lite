@@ -337,25 +337,10 @@
 }
 
 /* Hover item name (only shows on hover) */
-.orbHoverName {
-  position: absolute;
-  left: 50%;
-  top: calc(100% + 6px);
-  transform: translateX(-50%);
-  background: #111;
-  color: #fff;
-  font-size: 11px;
-  padding: 6px 8px;
-  border-radius: 8px;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 120ms ease;
-  z-index: 5;
-}
 
-.orbWrap:hover .orbHoverName {
+.orbHoverName.tt--open {
   opacity: 1;
+  visibility: visible;
 }
 
 .mobrow--locked {
@@ -442,4 +427,172 @@
   background: #c7c7c7;
   border: 3px solid transparent;
   background-clip: content-box;
+}
+
+/* Item requirements / stats tooltip */
+.orb--locked {
+  opacity: 0.45;
+  filter: grayscale(0.7);
+  cursor: not-allowed !important;
+}
+
+.tt__stats {
+  margin-top: 4px;
+  font-size: 11px;
+  opacity: 0.95;
+}
+/* Tooltip revamp */
+/* Tooltip (fixed + open class) */
+.orbHoverName {
+  position: fixed;
+  left: 0;
+  top: 0;
+
+  background: #111;
+  color: #fff;
+  font-size: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+
+  min-width: 220px;
+  max-width: min(320px, calc(100vw - 16px));
+  white-space: normal;
+
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+
+  z-index: 9999;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.orbHoverName.tt--open {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Tooltip content */
+.tt__top {
+  margin-bottom: 8px;
+}
+.tt__title {
+  font-weight: 900;
+  font-size: 13px;
+  line-height: 1.15;
+}
+.tt__type {
+  font-weight: 700;
+  opacity: 0.85;
+}
+.tt__rarity {
+  margin-top: 4px;
+  font-style: italic;
+  opacity: 0.9;
+}
+
+.tt__stats {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+.tt__statRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 3px 0;
+}
+.tt__statK {
+  opacity: 0.85;
+  font-weight: 700;
+}
+.tt__statV {
+  font-weight: 900;
+}
+.tt__muted {
+  opacity: 0.8;
+}
+
+.tt__lvl {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  opacity: 0.95;
+}
+
+.orbHoverName.tt--open {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Flip behavior */
+.orbWrap.orbWrap--tt-left .orbHoverName {
+  left: 0;
+  transform: translateX(0);
+}
+
+.orbWrap.orbWrap--tt-right .orbHoverName {
+  left: auto;
+  right: 0;
+  transform: translateX(0);
+}
+
+/* Tooltip content layout */
+.tt__top {
+  margin-bottom: 8px;
+}
+
+.tt__title {
+  font-weight: 900;
+  font-size: 13px;
+  line-height: 1.15;
+}
+
+.tt__type {
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+.tt__rarity {
+  margin-top: 4px;
+  font-style: italic;
+  opacity: 0.9;
+}
+
+.tt__stats {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.tt__statRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 3px 0;
+}
+
+.tt__statK {
+  opacity: 0.85;
+  font-weight: 700;
+}
+
+.tt__statV {
+  font-weight: 900;
+}
+
+.tt__muted {
+  opacity: 0.8;
+}
+
+.tt__lvl {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  opacity: 0.95;
 }
