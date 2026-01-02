@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { createNewPlayer, MOBS } from "./engine";
-import type { FightState, Mob, Equipment, Item, ItemSlot } from "./types";
+import type {
+  FightState,
+  Mob,
+  Equipment,
+  Item,
+  ItemSlot,
+  Stats,
+} from "./types";
 import { startFight, attackTurn } from "./combat";
 import { expToNext, maxMobLevelAllowed } from "./balance";
 type Phase = "ready" | "inFight" | "cooldown";
@@ -212,11 +219,56 @@ export function useGame() {
     return "Gotowy";
   }
 
+  function applyItemStats(p: Stats, stats: Item["stats"], sign: 1 | -1): Stats {
+    const s = stats ?? {};
+    const next = {
+      ...p,
+      strenght: p.strenght + sign * (s.strenght ?? 0),
+      armor: p.armor + sign * (s.armor ?? 0),
+      luck: p.luck + sign * (s.luck ?? 0),
+      maxHp: p.maxHp + sign * (s.maxHp ?? 0),
+    };
+
+    next.maxHp = Math.max(1, next.maxHp);
+    next.strenght = Math.max(0, next.strenght);
+    next.armor = Math.max(0, next.armor);
+    next.luck = Math.max(0, next.level);
+    next.hp = Math.min(Math.max(0, next.hp), next.maxHp);
+
+    return next;
+  }
+
   function equipItem(itemId: string) {
+    const item = gear.inventory.find((i) => i.id === itemId);
+    if (!item) return;
+
+    if (player.level < item.requiredLevel) {
+      setLog((prev) => [
+        `Nie możesz założyć ${item.name}. Wymaga lvl ${item.requiredLevel}.`,
+        ...prev,
+      ]);
+      return;
+    }
+
+    const slot = item.slot;
+    const currentlyEquipped = gear.equipment[slot];
+
+    setPlayer((p) => {
+      let next = p;
+      if (currentlyEquipped)
+        next = applyItemStats(next, currentlyEquipped.stats, -1);
+      next = applyItemStats(next, item.stats, +1);
+      return next;
+    });
+
     dispatchGear({ type: "EQUIP", itemId });
   }
 
   function unequip(slot: ItemSlot) {
+    const item = gear.equipment[slot];
+    if (!item) return;
+
+    setPlayer((p) => applyItemStats(p, item.stats, -1));
     dispatchGear({ type: "UNEQUIP", slot });
   }
 
