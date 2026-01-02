@@ -2,7 +2,7 @@ import "./App.css";
 import { useGame } from "./game/useGame";
 import { useState } from "react";
 import { BOSSES } from "./game/engine";
-import type React from "react";
+// import type React from "react";
 function rarityClass(r: string) {
   return `orb orb--${r}`;
 }
@@ -91,40 +91,40 @@ function statsLinesPl(stats?: any) {
  * - jeśli overflow w prawo: align-right (tooltip rośnie w lewo)
  */
 
-function flipTooltipIfNeeded(wrapEl: HTMLElement | null) {
-  if (!wrapEl) return;
+// function flipTooltipIfNeeded(wrapEl: HTMLElement | null) {
+//   if (!wrapEl) return;
 
-  const tt = wrapEl.querySelector<HTMLElement>(".orbHoverName");
-  if (!tt) return;
+//   const tt = wrapEl.querySelector<HTMLElement>(".orbHoverName");
+//   if (!tt) return;
 
-  wrapEl.classList.remove("orbWrap--tt-left", "orbWrap--tt-right");
+//   wrapEl.classList.remove("orbWrap--tt-left", "orbWrap--tt-right");
 
-  const prevOpcaity = tt.style.opacity;
-  const prevVisibility = tt.style.visibility;
-  const prevPointer = tt.style.pointerEvents;
+//   const prevOpcaity = tt.style.opacity;
+//   const prevVisibility = tt.style.visibility;
+//   const prevPointer = tt.style.pointerEvents;
 
-  tt.style.opacity = "1";
-  tt.style.visibility = "hidden";
-  tt.style.pointerEvents = "none";
+//   tt.style.opacity = "1";
+//   tt.style.visibility = "hidden";
+//   tt.style.pointerEvents = "none";
 
-  void tt.offsetWidth;
-  const tooltipWidth = tt.offsetWidth;
-  const wrapRect = wrapEl.getBoundingClientRect();
+//   void tt.offsetWidth;
+//   const tooltipWidth = tt.offsetWidth;
+//   const wrapRect = wrapEl.getBoundingClientRect();
 
-  const pad = 8;
-  const centerX = wrapRect.left + wrapRect.width / 2;
+//   const pad = 8;
+//   const centerX = wrapRect.left + wrapRect.width / 2;
 
-  // jeśli wyśrodkowny tooltip nie mieście się w
-  if (centerX - tooltipWidth / 2 < pad) {
-    wrapEl.classList.add("orbWrap--tt-left");
-  } else if (centerX + tooltipWidth / 2 > window.innerWidth - pad) {
-    wrapEl.classList.add("orbWrap--tt-right");
-  }
+//   // jeśli wyśrodkowny tooltip nie mieście się w
+//   if (centerX - tooltipWidth / 2 < pad) {
+//     wrapEl.classList.add("orbWrap--tt-left");
+//   } else if (centerX + tooltipWidth / 2 > window.innerWidth - pad) {
+//     wrapEl.classList.add("orbWrap--tt-right");
+//   }
 
-  tt.style.visibility = prevVisibility;
-  tt.style.opacity = prevOpcaity;
-  tt.style.pointerEvents = prevPointer;
-}
+//   tt.style.visibility = prevVisibility;
+//   tt.style.opacity = prevOpcaity;
+//   tt.style.pointerEvents = prevPointer;
+// }
 
 function showTooltip(e: any) {
   const wrap = e.currentTarget as HTMLElement;
