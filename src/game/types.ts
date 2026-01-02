@@ -1,6 +1,9 @@
 // Zmienna typu Rarity określa rzadkość przedmiotu w grze.
 export type Rarity = "common" | "uncommon" | "rare" | "epic" | "legendary";
 export type ItemSlot = "weapon" | "armor" | "charm";
+export type ItemStats = Partial<
+  Pick<Stats, "maxHp" | "strenght" | "armor" | "luck">
+>;
 
 export type Stats = {
   maxHp: number;
@@ -34,6 +37,7 @@ export type Item = {
   slot: ItemSlot;
   sellPrice: number;
   requiredLevel: number;
+  stats: ItemStats;
 };
 
 export type BattleResult = {
