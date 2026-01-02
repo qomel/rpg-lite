@@ -378,3 +378,68 @@
   font-size: 12px;
   opacity: 0.75;
 }
+
+/* Tabs (Mobs / Boss) */
+.tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  padding: 3px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  background: #f6f6f6;
+}
+
+.tab {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-weight: 900;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  color: #111;
+}
+
+.tab:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.tab--active {
+  background: #fff;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
+  border: 1px solid #e2e2e2;
+}
+
+.tab:focus-visible {
+  outline: 2px solid #111;
+  outline-offset: 2px;
+}
+
+/* Right panel: scrollable mob list */
+.moblistWrap {
+  max-height: 72vh; /* możesz zmienić na 560px jeśli wolisz stałe */
+  overflow-y: auto;
+  padding-right: 6px; /* żeby content nie wpadał pod scrollbar */
+}
+
+/* Optional: subtelniejszy scrollbar (Chromium/WebKit) */
+.moblistWrap::-webkit-scrollbar {
+  width: 10px;
+}
+.moblistWrap::-webkit-scrollbar-track {
+  background: transparent;
+}
+.moblistWrap::-webkit-scrollbar-thumb {
+  background: #d9d9d9;
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+.moblistWrap::-webkit-scrollbar-thumb:hover {
+  background: #c7c7c7;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
