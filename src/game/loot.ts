@@ -1,6 +1,6 @@
-import type { Item, Mob, Stats } from "./types";
+import type { Item, ItemStats, Mob, Stats } from "./types";
 import { clamp } from "./balance";
-import { pickByWeight, rand01 } from "./rng";
+import { pickByWeight, rand01, randInt } from "./rng";
 import { LOOT_TABLES, rarityLeq } from "./lootTables";
 
 function sellPriceFor(rarity: Item["rarity"]): number {
@@ -10,6 +10,48 @@ function sellPriceFor(rarity: Item["rarity"]): number {
   if (rarity === "epic") return 220;
   if (rarity === "legendary") return 1000;
   return 0;
+}
+
+function rarityMultiplier(r: Item["rarity"]): number {
+  switch (r) {
+    case "common":
+      return 1.0;
+    case "uncommon":
+      return 1.15;
+    case "rare":
+      return 1.35;
+    case "epic":
+      return 1.65;
+    case "legendary":
+      return 2.1;
+    default:
+      return 1.0;
+  }
+}
+
+function rollItemStats(
+  slot: Item["slot"],
+  requiredLevel: number,
+  rarity: Item["rarity"]
+): ItemStats {
+  const mult = rarityMultiplier(rarity);
+  const wiggle = (min: number, max: number) => randInt(min, max);
+
+  if (slot === "weapon") {
+    const base = Math.max(1, Math.round(0.8 + requiredLevel * 0.55));
+    return { strenght: Math.max(1, Math.round((base + wiggle(0, 1)) * mult)) };
+  }
+
+  if (slot === "armor") {
+    const baseArmor = Math.max(0, Math.round(requiredLevel * 0.45));
+    const baseHp = Math.max(2, Math.round(6 + requiredLevel * 2.6));
+    return {
+      armor: Math.max(0, Math.round((baseArmor + wiggle(0, 1)) * mult)),
+      maxHp: Math.max(2, Math.round((baseHp + wiggle(0, 3)) * mult)),
+    };
+  }
+  const baseLuck = Math.max(1, Math.round(1 + requiredLevel * 0.35));
+  return { luck: Math.max(1, Math.round((baseLuck + wiggle(0, 1)) * mult)) };
 }
 
 export function rollLoot(player: Stats, mob: Mob): Item | undefined {
@@ -56,6 +98,7 @@ export function rollLoot(player: Stats, mob: Mob): Item | undefined {
     slot: chosen.slot,
     requiredLevel: chosen.requiredLevel,
     sellPrice: sellPriceFor(chosen.rarity),
+    stats: rollItemStats(chosen.slot, chosen.requiredLevel, chosen.rarity),
   };
 
   return item;
