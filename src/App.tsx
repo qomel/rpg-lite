@@ -2,7 +2,7 @@ import "./App.css";
 import { useGame } from "./game/useGame";
 import { useState } from "react";
 import { BOSSES } from "./game/engine";
-
+import type React from "react";
 function rarityClass(r: string) {
   return `orb orb--${r}`;
 }
@@ -37,6 +37,137 @@ function mobColor(key: string) {
     boss3: "#333", // Void Wyrm
   };
   return map[key] ?? "#DDD";
+}
+
+// function formatItemStats(
+//   stats?: Partial<{
+//     maxHp: number;
+//     strenght: number;
+//     armor: number;
+//     luck: number;
+//   }>
+// ) {
+//   if (!stats) return "";
+//   const parts: string[] = [];
+//   if (stats.strenght) parts.push(`STR +${stats.strenght}`);
+//   if (stats.armor) parts.push(`ARM +${stats.armor}`);
+//   if (stats.maxHp) parts.push(`HP +${stats.maxHp}`);
+//   if (stats.luck) parts.push(`LUCK +${stats.luck}`);
+//   return parts.join(" • ");
+// }
+
+function slotPl(slot: string) {
+  if (slot === "weapon") return "Broń";
+  if (slot === "armor") return "Zbroja";
+  if (slot === "charm") return "Amulet";
+  return slot;
+}
+
+function rarityPl(r: string) {
+  const map: Record<string, string> = {
+    comon: "Pospolity",
+    uncommon: "Niepospolity",
+    rare: "Rzadki",
+    epic: "Epicki",
+    legendary: "Legendarny",
+  };
+  return map[r] ?? r;
+}
+
+function statsLinesPl(stats?: any) {
+  if (!stats) return [];
+  const lines: { k: string; v: number }[] = [];
+  if (stats.strenght) lines.push({ k: "Siła", v: stats.strenght });
+  if (stats.armor) lines.push({ k: "Pancerz", v: stats.armor });
+  if (stats.maxHp) lines.push({ k: "Zdrowie", v: stats.maxHp });
+  if (stats.luck) lines.push({ k: "Szczęście", v: stats.luck });
+  return lines;
+}
+
+/**
+ * Ustawia klasę pozycjonowania tooltipa, jeśli wychodzi poza ekran.
+ * - default: środek
+ * - jeśli overflow w lewo: align-left (tooltip rośnie w prawo)
+ * - jeśli overflow w prawo: align-right (tooltip rośnie w lewo)
+ */
+
+function flipTooltipIfNeeded(wrapEl: HTMLElement | null) {
+  if (!wrapEl) return;
+
+  const tt = wrapEl.querySelector<HTMLElement>(".orbHoverName");
+  if (!tt) return;
+
+  wrapEl.classList.remove("orbWrap--tt-left", "orbWrap--tt-right");
+
+  const prevOpcaity = tt.style.opacity;
+  const prevVisibility = tt.style.visibility;
+  const prevPointer = tt.style.pointerEvents;
+
+  tt.style.opacity = "1";
+  tt.style.visibility = "hidden";
+  tt.style.pointerEvents = "none";
+
+  void tt.offsetWidth;
+  const tooltipWidth = tt.offsetWidth;
+  const wrapRect = wrapEl.getBoundingClientRect();
+
+  const pad = 8;
+  const centerX = wrapRect.left + wrapRect.width / 2;
+
+  // jeśli wyśrodkowny tooltip nie mieście się w
+  if (centerX - tooltipWidth / 2 < pad) {
+    wrapEl.classList.add("orbWrap--tt-left");
+  } else if (centerX + tooltipWidth / 2 > window.innerWidth - pad) {
+    wrapEl.classList.add("orbWrap--tt-right");
+  }
+
+  tt.style.visibility = prevVisibility;
+  tt.style.opacity = prevOpcaity;
+  tt.style.pointerEvents = prevPointer;
+}
+
+function showTooltip(e: any) {
+  const wrap = e.currentTarget as HTMLElement;
+  const tt = wrap.querySelector<HTMLElement>(".orbHoverName");
+  if (!tt) return;
+
+  tt.classList.add("tt--open");
+
+  const anchor =
+    wrap.querySelector<HTMLElement>(".orb[role='button'], .orb") ?? wrap;
+
+  const a = anchor.getBoundingClientRect();
+
+  // po pokazaniu mierzymy realny rozmiar
+  const t = tt.getBoundingClientRect();
+
+  const pad = 8;
+  const gap = 8;
+
+  // clamp do viewportu (to rozwiązuje uciekanie poza ekran)
+  const desiredLeft = a.left + a.width / 2 - t.width / 2;
+  const left = Math.min(
+    Math.max(desiredLeft, pad),
+    window.innerWidth - pad - t.width
+  );
+
+  // dół albo góra jeśli brak miejsca
+  const belowTop = a.bottom + gap;
+  const aboveTop = a.top - gap - t.height;
+  const top =
+    belowTop + t.height > window.innerHeight - pad
+      ? Math.max(pad, aboveTop)
+      : belowTop;
+
+  tt.style.left = `${left}px`;
+  tt.style.top = `${top}px`;
+}
+
+function hideTooltip(e: any) {
+  const wrap = e.currentTarget as HTMLElement;
+  const tt = wrap.querySelector<HTMLElement>(".orbHoverName");
+  if (!tt) return;
+  tt.classList.remove("tt--open");
 }
 
 export default function App() {
@@ -112,7 +243,12 @@ export default function App() {
               {(["weapon", "armor", "charm"] as const).map((slot) => {
                 const it = equipment[slot];
                 return (
-                  <div className="orbWrap" key={slot}>
+                  <div
+                    className="orbWrap"
+                    key={slot}
+                    onMouseEnter={showTooltip}
+                    onMouseLeave={hideTooltip}
+                  >
                     <div className="orbLabel">{slot}</div>
 
                     {it ? (
@@ -124,19 +260,46 @@ export default function App() {
                           tabIndex={0}
                           aria-label={`${it.name}`}
                         />
+
                         <div className="orbHoverName">
-                          <div className="tt__name">{it.name}</div>
-                          <div className="tt__meta">
-                            {it.rarity} • {it.slot}
+                          <div className="tt__top">
+                            <div className="tt__title">
+                              {it.name}{" "}
+                              <span className="tt__type">
+                                ({slotPl(it.slot)})
+                              </span>
+                            </div>
+                            <div className="tt__rarity">
+                              {rarityPl(it.rarity)}
+                            </div>
                           </div>
+
+                          <div className="tt__stats">
+                            {statsLinesPl(it.stats).length === 0 ? (
+                              <div className="tt__muted">Brak statów</div>
+                            ) : (
+                              statsLinesPl(it.stats).map((s) => (
+                                <div className="tt__statRow" key={s.k}>
+                                  <span className="tt__statK">{s.k}:</span>
+                                  <span className="tt__statV">{s.v}</span>
+                                </div>
+                              ))
+                            )}
+                          </div>
+
+                          <div className="tt__lvl">LVL {it.requiredLevel}</div>
                         </div>
                       </>
                     ) : (
                       <>
                         <div className="orb orb--empty" />
+
                         <div className="orbHoverName">
-                          <div className="tt__name">Puste</div>
-                          <div className="tt__meta">{slot}</div>
+                          <div className="tt__top">
+                            <div className="tt__title">Puste</div>
+                            <div className="tt__rarity">{slotPl(slot)}</div>
+                          </div>
+                          <div className="tt__lvl">LVL 0</div>
                         </div>
                       </>
                     )}
@@ -156,23 +319,56 @@ export default function App() {
               <div className="empty">Brak itemów. Farm loot z mobów.</div>
             ) : (
               <div className="orbRow orbRow--wrap">
-                {inventory.map((it) => (
-                  <div className="orbWrap" key={it.id}>
+                {inventory.map((it) => {
+                  const canEquip = player.level >= it.requiredLevel;
+                  return (
                     <div
-                      className={rarityClass(it.rarity)}
-                      onDoubleClick={() => equipItem(it.id)}
-                      role="button"
-                      tabIndex={0}
-                      aria-label={`${it.name}`}
-                    />
-                    <div className="orbHoverName">
-                      <div className="tt__name">{it.name}</div>
-                      <div className="tt__meta">
-                        {it.rarity} • {it.slot}
+                      className="orbWrap"
+                      key={it.id}
+                      onMouseEnter={showTooltip}
+                      onMouseLeave={hideTooltip}
+                    >
+                      <div
+                        className={`${rarityClass(it.rarity)} ${
+                          !canEquip ? "orb--locked" : ""
+                        }`}
+                        onDoubleClick={() => canEquip && equipItem(it.id)}
+                        title={
+                          canEquip
+                            ? `Załóż ${it.name}`
+                            : `Wymaga lvl ${it.requiredLevel}`
+                        }
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`${it.name}`}
+                      />
+                      <div className="orbHoverName">
+                        <div className="tt__top">
+                          <div className="tt__title">
+                            {it.name}{" "}
+                            <span className="tt__type">
+                              ({slotPl(it.slot)})
+                            </span>
+                          </div>
+                          <div className="tt__rarity">
+                            {rarityPl(it.rarity)}
+                          </div>
+                        </div>
+
+                        <div className="tt__stats">
+                          {statsLinesPl(it.stats).map((s) => (
+                            <div className="tt__statRow" key={s.k}>
+                              <span className="tt__statK">{s.k}:</span>
+                              <span className="tt__statV">{s.v}</span>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="tt__lvl">LVL {it.requiredLevel}</div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
