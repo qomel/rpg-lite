@@ -38,16 +38,16 @@ function rollItemStats(
   const wiggle = (min: number, max: number) => randInt(min, max);
 
   if (slot === "weapon") {
-    const base = Math.max(1, Math.round(0.8 + requiredLevel * 0.55));
-    return { strenght: Math.max(1, Math.round((base + wiggle(0, 1)) * mult)) };
+    const base = Math.max(2, Math.round(1.5 + requiredLevel * 0.7));
+    return { strenght: Math.max(2, Math.round((base + wiggle(0, 1)) * mult)) };
   }
 
   if (slot === "armor") {
-    const baseArmor = Math.max(0, Math.round(requiredLevel * 0.45));
-    const baseHp = Math.max(2, Math.round(6 + requiredLevel * 2.6));
+    const baseArmor = Math.max(1, Math.round(requiredLevel * 0.5));
+    const baseHp = Math.max(10, Math.round(10 + requiredLevel * 4.0));
     return {
-      armor: Math.max(0, Math.round((baseArmor + wiggle(0, 1)) * mult)),
-      maxHp: Math.max(2, Math.round((baseHp + wiggle(0, 3)) * mult)),
+      armor: Math.max(1, Math.round((baseArmor + wiggle(0, 1)) * mult)),
+      maxHp: Math.max(10, Math.round((baseHp + wiggle(0, 5)) * mult)),
     };
   }
   const baseLuck = Math.max(1, Math.round(1 + requiredLevel * 0.35));
