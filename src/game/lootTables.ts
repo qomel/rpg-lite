@@ -598,8 +598,8 @@ export const LOOT_TABLES: Record<string, LootTable> = {
     ],
   },
 
-  boss_ironbeast: {
-    id: "boss_ironbeast",
+  hehe_spider: {
+    id: "hehe_spider",
     maxRarity: "legendary",
     entries: [
       {

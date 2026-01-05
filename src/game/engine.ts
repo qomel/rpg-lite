@@ -230,14 +230,14 @@ export const BOSSES: Mob[] = [
     lootTableId: "boss_swampking",
   },
   {
-    id: "boss_ironbeast",
-    name: "Iron Beast",
+    id: "bigspider",
+    name: "Hehe spider",
     kind: "boss",
     level: 14,
     icon: "boss2",
     maxHp: 420,
     mobAttack: 33,
-    lootTableId: "boss_ironbeast",
+    lootTableId: "hehe_spider",
   },
   {
     id: "boss_voidwyrm",

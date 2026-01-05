@@ -2,41 +2,11 @@ import "./App.css";
 import { useGame } from "./game/useGame";
 import { useState } from "react";
 import { BOSSES } from "./game/engine";
+import { MobSprite } from "./game/mobSprite";
+import { mobColor } from "./game/mobs/mobColor";
 // import type React from "react";
 function rarityClass(r: string) {
   return `orb orb--${r}`;
-}
-
-function mobColor(key: string) {
-  const map: Record<string, string> = {
-    // Kolory Mobów (01-20)
-    slime: "#7CFF8A",
-    rat: "#B9B9B9",
-    bat: "#A18F7C",
-    spider: "#9B7CFF",
-    wolf: "#7C9BFF",
-    bandit: "#FFB36B",
-    skeleton: "#E1E1E1",
-    ghoul: "#7C9A71",
-    mage: "#7CFFEE",
-    ogre: "#8FD3FF",
-    wraith: "#B3B3B3",
-    knight: "#FFD700",
-    golem: "#8B4513",
-    harpy: "#FF7CB9",
-    wyrm: "#D7A7FF",
-    cultist: "#800000",
-    assassin: "#36454F",
-    wyvern: "#556B2F",
-    demon: "#FF4500",
-    ancient: "#4682B4",
-
-    // Kolory Bossów (według pola icon)
-    boss1: "#111", // Swamp King
-    boss2: "#222", // Iron Beast
-    boss3: "#333", // Void Wyrm
-  };
-  return map[key] ?? "#DDD";
 }
 
 // function formatItemStats(
@@ -377,13 +347,26 @@ export default function App() {
         {/* CENTER: FIGHT */}
         <section className="panel panel--center">
           <div className="fightTop">
-            <div className="fightPick">
-              <div className="fightPick__label">Wybierz</div>
-              <div className="fightPick__name">{selectedMob.name}</div>
-              <div className="fightPick__meta">
-                Mob HP: <strong>{fight.mobHp}</strong> / {selectedMob.maxHp}{" "}
-                <span className="dot">•</span> Status:{" "}
-                <strong>{statusLabel}</strong>
+            <div className="fightPickWithIcon">
+              {/* IKONA MOBA (po lewej) */}
+              <div className="fightPick__icon" aria-hidden="true">
+                <MobSprite
+                  id={selectedMob.icon}
+                  size={56}
+                  fps={2.5}
+                  color={mobColor(selectedMob.icon)}
+                />
+              </div>
+
+              {/* INFO O MOBIE */}
+              <div className="fightPick">
+                <div className="fightPick__label">Wybierz</div>
+                <div className="fightPick__name">{selectedMob.name}</div>
+                <div className="fightPick__meta">
+                  Mob HP: <strong>{fight.mobHp}</strong> / {selectedMob.maxHp}{" "}
+                  <span className="dot">•</span> Status:{" "}
+                  <strong>{statusLabel}</strong>
+                </div>
               </div>
             </div>
 
@@ -486,11 +469,9 @@ export default function App() {
                     disabled={disabled}
                     title={title}
                   >
-                    <div
-                      className="mobrow__img"
-                      style={{ background: mobColor(m.icon) }}
-                      aria-hidden="true"
-                    />
+                    <div>
+                      <MobSprite id={m.icon} size={42} fps={2.5} />
+                    </div>
                     <div className="mobrow__body">
                       <div className="mobrow__name">
                         {m.name} <span className="badgeLvl">lvl {m.level}</span>
