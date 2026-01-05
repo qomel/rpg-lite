@@ -613,3 +613,53 @@
   border-radius: 10px;
   background: rgba(0, 0, 0, 0.12);
 }
+
+.ttCompare__cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.ttCompare__head {
+  font-size: 12px;
+  opacity: 0.7;
+  margin-bottom: 4px;
+}
+
+.ttCompare__stats {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.ttCompare__row {
+  display: grid;
+  grid-template-columns: 1.2fr 0.6fr 0.6fr 0.6fr;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.ttCompare__k {
+  opacity: 0.85;
+}
+
+.ttCompare__v {
+  text-align: right;
+  opacity: 0.9;
+}
+
+.ttCompare__d {
+  text-align: right;
+  font-weight: 700;
+  opacity: 0.95;
+}
+
+.ttCompare__d--pos {
+  color: #2ecc71;
+}
+
+.ttCompare__d--neg {
+  color: #e74c3c;
+}
