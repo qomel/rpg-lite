@@ -135,7 +135,7 @@ export default function App() {
     expToNext,
     buyPotion,
     maxAllowedMobLevel,
-    usePotion,
+    // usePotion,
     potionPrice,
     potionHeal,
     sellItems,
