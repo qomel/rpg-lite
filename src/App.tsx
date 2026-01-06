@@ -1,9 +1,10 @@
 import "./App.css";
 import { useGame } from "./game/useGame";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BOSSES } from "./game/engine";
 import { MobSprite } from "./game/mobSprite";
 import { mobColor } from "./game/mobs/mobColor";
+import type { Item } from "./game/types";
 // import type React from "react";
 function rarityClass(r: string) {
   return `orb orb--${r}`;
@@ -18,7 +19,7 @@ function slotPl(slot: string) {
 
 function rarityPl(r: string) {
   const map: Record<string, string> = {
-    comon: "Pospolity",
+    common: "Pospolity",
     uncommon: "Niepospolity",
     rare: "Rzadki",
     epic: "Epicki",
@@ -132,19 +133,56 @@ export default function App() {
     equipItem,
     unequip,
     expToNext,
-    maxAllowedMobLevel,
-    sellItem,
     buyPotion,
-    usePotion,
+    maxAllowedMobLevel,
+    // usePotion,
     potionPrice,
     potionHeal,
+    sellItems,
+    takeInventoryItem,
+    putInventoryItem,
+    nextSlotPrice,
+    buyInventorySlot,
   } = useGame();
+
+  const [sellBox, setSellBox] = useState<Item[]>([]);
+  const [buyPotionQty, setBuyPotionQty] = useState(0);
+  const [shopError, setShopError] = useState<string | null>(null);
+
+  const sellTotal = sellBox.reduce((s, it) => s + (it.sellPrice ?? 0), 0);
+  const buyTotal = buyPotionQty * potionPrice;
 
   const [enemyTab, setEnemyTab] = useState<"mobs" | "boss">("mobs");
   const enemies = enemyTab === "mobs" ? mobs : BOSSES;
 
-  // Porównywarka
+  const [view, setView] = useState<"mobs" | "shop" | "quest">("mobs");
 
+  const sellBoxRef = useRef<Item[]>([]);
+  const prevViewRef = useRef(view);
+
+  useEffect(() => {
+    sellBoxRef.current = sellBox;
+  }, [sellBox]);
+
+  useEffect(() => {
+    const prev = prevViewRef.current;
+    //Przy wyjściu ze sklepu zwróc itemy do eq
+    if (prev === "shop" && view !== "shop") {
+      const itemsToReturn = sellBoxRef.current;
+
+      if (itemsToReturn.length > 0) {
+        itemsToReturn.forEach((it) => putInventoryItem(it));
+      }
+      // Czyszczenie żeby nie było ghost item
+      sellBoxRef.current = [];
+      setSellBox([]);
+      // Czyszczneie koszyka kupna
+      setBuyPotionQty(0);
+      setShopError(null);
+    }
+    prevViewRef.current = view;
+  }, [view, putInventoryItem]);
+  // Porównywarka
   const [ctrlDown, setCtrlDown] = useState(false);
   useEffect(() => {
     const onDown = (e: KeyboardEvent) => {
@@ -164,16 +202,45 @@ export default function App() {
   }, []);
 
   return (
-    <div className="app">
+    <div className={`app theme--${view}`}>
       <header className="app__header">
         <h1 className="app__title">RPG Lite</h1>
         <p className="app__subtitle">Turówka, Loot RNG</p>
       </header>
+      {/*  TOPSWITCH */}
+      <div className="topSwitch">
+        <button
+          className={`topSwitch__btn ${view === "shop" ? "is-active" : ""}`}
+          onClick={() => setView("shop")}
+          type="button"
+        >
+          <div className="topSwitch__label">SKLEP</div>
+        </button>
+
+        <button
+          className={`topSwitch__btn ${view === "mobs" ? "is-active" : ""}`}
+          onClick={() => setView("mobs")}
+          type="button"
+        >
+          <div className="topSwitch__label">MOBS</div>
+        </button>
+
+        <button
+          className={`topSwitch__btn ${view === "quest" ? "is-active" : ""}`}
+          onClick={() => setView("quest")}
+          type="button"
+        >
+          <div className="topSwitch__label">QUEST</div>
+        </button>
+      </div>
 
       <main className="layout">
         {/* LEFT: PLAYER */}
         <section className="panel">
-          <h2 className="panel__title">Player</h2>
+          <div className="panelTitleRow">
+            <h2 className="panel__title">Player</h2>
+            <div className="panelTitlePill">Lv {player.level}</div>
+          </div>
 
           <div className="kv">
             <span className="kv__k">HP</span>
@@ -183,12 +250,22 @@ export default function App() {
           </div>
 
           <div className="kv">
-            <span className="kv__k">Level</span>
-            <span className="kv__v">{player.level}</span>
-            <span className="kv__k">EXP</span>
-            <span className="kv__v">
-              {player.exp} / {expToNext}
-            </span>
+            <div className="expBarWrap">
+              <div className="expBarTop">
+                <span>EXP</span>
+                <strong>
+                  {player.exp} / {expToNext}
+                </strong>
+              </div>
+              <div className="expBar">
+                <div
+                  className="expBar__fill"
+                  style={{
+                    width: `${Math.min(100, (player.exp / expToNext) * 100)}%`,
+                  }}
+                />
+              </div>
+            </div>
           </div>
 
           <div className="kv">
@@ -199,32 +276,6 @@ export default function App() {
             <span className="kv__k">Mikstury</span>
             <span className="kv__v">{player.potions}</span>
           </div>
-          <p>lewym sprzedajesz item (testowane)</p>
-          <div className="shopRow">
-            <button
-              className="btn"
-              onClick={() => buyPotion(1)}
-              disabled={player.gold < potionPrice}
-              title={`Kup miksturę za ${potionPrice} gold`}
-            >
-              Kup miksturę ({potionPrice}g)
-            </button>
-
-            <button
-              className="btn"
-              onClick={usePotion}
-              disabled={
-                phase === "cooldown" ||
-                player.hp <= 0 ||
-                player.hp >= player.maxHp ||
-                player.potions <= 0
-              }
-              title={`Użyj mikstury: +${potionHeal} HP`}
-            >
-              Użyj (+{potionHeal} HP)
-            </button>
-          </div>
-
           <div className="statsline">
             <span className="statsline__label">Stats</span>
             <span className="statsline__value">
@@ -311,7 +362,9 @@ export default function App() {
 
           {/* BACKPACK */}
           <div className="invBlock">
-            <div className="invTitle">Plecak ({inventory.length})</div>
+            <div className="invTitle">
+              Plecak ({inventory.length}/{player.inventoryCap})
+            </div>
 
             {inventory.length === 0 ? (
               <div className="empty">Brak itemów. Farm loot z mobów.</div>
@@ -331,19 +384,28 @@ export default function App() {
                         className={`${rarityClass(it.rarity)} ${
                           !canEquip ? "orb--locked" : ""
                         }`}
-                        onDoubleClick={() => canEquip && equipItem(it.id)}
+                        onDoubleClick={() => {
+                          if (view === "shop") {
+                            const taken = takeInventoryItem(it.id);
+                            if (taken) setSellBox((prev) => [taken, ...prev]);
+                            return;
+                          }
+                          if (canEquip) equipItem(it.id);
+                        }}
                         title={
-                          canEquip
+                          view === "shop"
+                            ? `Wybierz do sprzedaży: ${it.name}`
+                            : canEquip
                             ? `Załóż ${it.name}`
                             : `Wymaga lvl ${it.requiredLevel}`
                         }
                         role="button"
                         tabIndex={0}
                         aria-label={`${it.name}`}
-                        onContextMenu={(e) => {
-                          e.preventDefault();
-                          sellItem(it.id);
-                        }}
+                        // onContextMenu={(e) => {
+                        //   e.preventDefault();
+                        //   sellItem(it.id);
+                        // }}
                       />
                       <div className="orbHoverName">
                         {ctrlDown ? (
@@ -462,156 +524,351 @@ export default function App() {
           </div>
         </section>
 
-        {/* CENTER: FIGHT */}
-        <section className="panel panel--center">
-          <div className="fightTop">
-            <div className="fightPickWithIcon">
-              {/* IKONA MOBA (po lewej) */}
-              <div className="fightPick__icon" aria-hidden="true">
-                <MobSprite
-                  id={selectedMob.icon}
-                  size={56}
-                  fps={2.5}
-                  color={mobColor(selectedMob.icon)}
-                />
+        {view === "mobs" && (
+          <>
+            {/* CENTER: FIGHT */}
+            <section className="panel panel--center">
+              <div className="fightTop">
+                <div className="fightPickWithIcon">
+                  {/* IKONA MOBA (po lewej) */}
+                  <div className="fightPick__icon" aria-hidden="true">
+                    <MobSprite
+                      id={selectedMob.icon}
+                      size={56}
+                      fps={2.5}
+                      color={mobColor(selectedMob.icon)}
+                    />
+                  </div>
+
+                  {/* INFO O MOBIE */}
+                  <div className="fightPick">
+                    <div className="fightPick__label">Wybierz</div>
+                    <div className="fightPick__name">{selectedMob.name}</div>
+                    <div className="fightPick__meta">
+                      Mob HP: <strong>{fight.mobHp}</strong> /{" "}
+                      {selectedMob.maxHp} <span className="dot">•</span> Status:{" "}
+                      <strong>{statusLabel}</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="fightActions">
+                  <button
+                    className="btn btn--primary"
+                    onClick={attack}
+                    disabled={!canAttack}
+                  >
+                    Atakuj
+                  </button>
+                  {/* Reset usunięty zgodnie z wymaganiem */}
+                </div>
               </div>
 
-              {/* INFO O MOBIE */}
-              <div className="fightPick">
-                <div className="fightPick__label">Wybierz</div>
-                <div className="fightPick__name">{selectedMob.name}</div>
-                <div className="fightPick__meta">
-                  Mob HP: <strong>{fight.mobHp}</strong> / {selectedMob.maxHp}{" "}
-                  <span className="dot">•</span> Status:{" "}
-                  <strong>{statusLabel}</strong>
+              <div className="divider" />
+
+              <div className="fightLog">
+                <div className="fightLog__title">Przebieg walki</div>
+
+                {log.length === 0 ? (
+                  <div className="empty">Wybierz moba i kliknij „Atakuj”.</div>
+                ) : (
+                  <ul className="log">
+                    {log.map((line, i) => (
+                      <li key={i} className="log__item">
+                        {line}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {phase === "cooldown" && (
+                  <div className="defeatBox">
+                    <strong>Gracz został pokonany!</strong>
+                    <div>Powrót do walki za: {cooldownLeft}s</div>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            {/* -------------------------  RIGHT: MOBS LIST --------------------------------- */}
+            <aside className="panel">
+              <div className="panel__head">
+                <div className="tabs">
+                  <button
+                    className={`tab ${
+                      enemyTab === "mobs" ? "tab--active" : ""
+                    }`}
+                    onClick={() => setEnemyTab("mobs")}
+                  >
+                    Mobs
+                  </button>
+                  <button
+                    className={`tab ${
+                      enemyTab === "boss" ? "tab--active" : ""
+                    }`}
+                    onClick={() => setEnemyTab("boss")}
+                  >
+                    Boss
+                  </button>
+                </div>
+
+                <p className="panel__hint">
+                  {selectionLocked
+                    ? "Nie możesz zmienić przeciwnika w trakcie walki."
+                    : enemyTab === "boss"
+                    ? "Bossy są znacznie silniejsze."
+                    : "Wybierz moba, żeby rozpocząć walkę."}
+                </p>
+              </div>
+
+              <div
+                className={`moblistWrap ${
+                  phase === "cooldown" ? "moblistWrap--blur" : ""
+                }`}
+              >
+                {phase === "cooldown" && (
+                  <div className="mobOverlay">
+                    <div className="mobOverlay__box">{cooldownLeft}s</div>
+                  </div>
+                )}
+
+                <div className="moblist">
+                  {enemies.map((m) => {
+                    const active = m.id === selectedMob.id;
+
+                    const lockedByLevel = m.level > maxAllowedMobLevel; // 6.3
+                    const disabled = selectionLocked || lockedByLevel; // 6.3
+
+                    const title = selectionLocked
+                      ? "Zakończ walkę, aby zmienić przeciwnika."
+                      : lockedByLevel
+                      ? `Za wysoki poziom. Masz L${player.level}. Możesz wybrać przeciwnika max L${maxAllowedMobLevel}.`
+                      : `Wybierz ${m.name}`;
+
+                    return (
+                      <button
+                        key={m.id}
+                        className={`mobrow ${active ? "mobrow--active" : ""} ${
+                          lockedByLevel ? "mobrow--locked" : ""
+                        }`}
+                        onClick={() => selectMob(m)}
+                        disabled={disabled}
+                        title={title}
+                      >
+                        <div>
+                          <MobSprite id={m.icon} size={42} fps={2.5} />
+                        </div>
+                        <div className="mobrow__body">
+                          <div className="mobrow__name">
+                            {m.name}{" "}
+                            <span className="badgeLvl">lvl {m.level}</span>
+                          </div>
+
+                          <div className="mobrow__meta">
+                            HP: {m.maxHp} <span className="dot">•</span> ATK:{" "}
+                            {m.mobAttack}
+                          </div>
+
+                          {lockedByLevel && (
+                            <div className="mobrow__req">
+                              Wymaga: max L{maxAllowedMobLevel}
+                            </div>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </aside>
+          </>
+        )}
+        {/* MAIN: SHOP */}
+        {view === "shop" && (
+          <section className="panel panel--center panel--span2">
+            <div className="panel__head">
+              <h2 className="panel__title">Sklep</h2>
+              <p className="panel__hint">
+                Sprzedawaj przedmioty i kupuj mikstury.
+              </p>
+            </div>
+
+            <div className="shopBanner">
+              <div className="shopBanner__img">[Merchant art placeholder]</div>
+              <div className="shopBanner__text">
+                <div className="shopBanner__title">Kupiec</div>
+                <div className="shopBanner__sub">
+                  W przyszłości wstawisz tu grafikę.
                 </div>
               </div>
             </div>
 
-            <div className="fightActions">
-              <button
-                className="btn btn--primary"
-                onClick={attack}
-                disabled={!canAttack}
-              >
-                Atakuj
-              </button>
-              {/* Reset usunięty zgodnie z wymaganiem */}
-            </div>
-          </div>
+            <div className="shopGrid">
+              <div className="shopPanel">
+                <div className="invTitle">Sprzedaż ({sellBox.length})</div>
 
-          <div className="divider" />
-
-          <div className="fightLog">
-            <div className="fightLog__title">Przebieg walki</div>
-
-            {log.length === 0 ? (
-              <div className="empty">Wybierz moba i kliknij „Atakuj”.</div>
-            ) : (
-              <ul className="log">
-                {log.map((line, i) => (
-                  <li key={i} className="log__item">
-                    {line}
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            {phase === "cooldown" && (
-              <div className="defeatBox">
-                <strong>Gracz został pokonany!</strong>
-                <div>Powrót do walki za: {cooldownLeft}s</div>
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* RIGHT: MOBS LIST */}
-        <aside className="panel">
-          <div className="panel__head">
-            <div className="tabs">
-              <button
-                className={`tab ${enemyTab === "mobs" ? "tab--active" : ""}`}
-                onClick={() => setEnemyTab("mobs")}
-              >
-                Mobs
-              </button>
-              <button
-                className={`tab ${enemyTab === "boss" ? "tab--active" : ""}`}
-                onClick={() => setEnemyTab("boss")}
-              >
-                Boss
-              </button>
-            </div>
-
-            <p className="panel__hint">
-              {selectionLocked
-                ? "Nie możesz zmienić przeciwnika w trakcie walki."
-                : enemyTab === "boss"
-                ? "Bossy są znacznie silniejsze."
-                : "Wybierz moba, żeby rozpocząć walkę."}
-            </p>
-          </div>
-
-          <div
-            className={`moblistWrap ${
-              phase === "cooldown" ? "moblistWrap--blur" : ""
-            }`}
-          >
-            {phase === "cooldown" && (
-              <div className="mobOverlay">
-                <div className="mobOverlay__box">{cooldownLeft}s</div>
-              </div>
-            )}
-
-            <div className="moblist">
-              {enemies.map((m) => {
-                const active = m.id === selectedMob.id;
-
-                const lockedByLevel = m.level > maxAllowedMobLevel; // 6.3
-                const disabled = selectionLocked || lockedByLevel; // 6.3
-
-                const title = selectionLocked
-                  ? "Zakończ walkę, aby zmienić przeciwnika."
-                  : lockedByLevel
-                  ? `Za wysoki poziom. Masz L${player.level}. Możesz wybrać przeciwnika max L${maxAllowedMobLevel}.`
-                  : `Wybierz ${m.name}`;
-
-                return (
-                  <button
-                    key={m.id}
-                    className={`mobrow ${active ? "mobrow--active" : ""} ${
-                      lockedByLevel ? "mobrow--locked" : ""
-                    }`}
-                    onClick={() => selectMob(m)}
-                    disabled={disabled}
-                    title={title}
-                  >
-                    <div>
-                      <MobSprite id={m.icon} size={42} fps={2.5} />
-                    </div>
-                    <div className="mobrow__body">
-                      <div className="mobrow__name">
-                        {m.name} <span className="badgeLvl">lvl {m.level}</span>
-                      </div>
-
-                      <div className="mobrow__meta">
-                        HP: {m.maxHp} <span className="dot">•</span> ATK:{" "}
-                        {m.mobAttack}
-                      </div>
-
-                      {lockedByLevel && (
-                        <div className="mobrow__req">
-                          Wymaga: max L{maxAllowedMobLevel}
+                {sellBox.length === 0 ? (
+                  <div className="empty">
+                    Double-click na item w plecaku, aby dodać do sprzedaży.
+                  </div>
+                ) : (
+                  <>
+                    <div className="orbRow orbRow--wrap">
+                      {sellBox.map((it) => (
+                        <div
+                          key={it.id}
+                          className="orbWrap"
+                          onMouseMove={showTooltip}
+                          onMouseLeave={hideTooltip}
+                        >
+                          <div
+                            className={rarityClass(it.rarity)}
+                            onDoubleClick={() => {
+                              // wyjęcie działa tą samą akcją co dodanie (double click)
+                              setSellBox((prev) =>
+                                prev.filter((x) => x.id !== it.id)
+                              );
+                              putInventoryItem(it);
+                            }}
+                            title={`Usuń ze sprzedaży: ${it.name}`}
+                            role="button"
+                            tabIndex={0}
+                            aria-label={it.name}
+                          />
                         </div>
-                      )}
+                      ))}
                     </div>
-                  </button>
-                );
-              })}
+
+                    <div className="shopSellBar">
+                      <div className="shopSellSum">
+                        Suma: <strong>{sellTotal} gold</strong>
+                      </div>
+
+                      <button
+                        className="btn btn--primary"
+                        onClick={() => {
+                          if (!sellBox.length) return;
+                          sellItems(sellBox);
+                          setSellBox([]); // brak przycisku wyczyść — po sprzedaży czyścimy automatycznie
+                        }}
+                      >
+                        Sprzedaj wszystko
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div className="shopPanel">
+                <div className="invTitle">Kupno</div>
+
+                <div className="orbRow orbRow--wrap">
+                  <div
+                    className="orbWrap"
+                    onMouseMove={showTooltip}
+                    onMouseLeave={hideTooltip}
+                  >
+                    <div
+                      className="orb orb--common"
+                      onDoubleClick={() => {
+                        setShopError(null);
+                        setBuyPotionQty((q) => q + 1);
+                      }}
+                      title={`Mikstura leczenia (+${potionHeal} HP) • ${potionPrice} gold`}
+                      role="button"
+                      tabIndex={0}
+                      aria-label="Mikstura leczenia"
+                    />
+                    <div className="orbHoverName">Mikstura</div>
+                  </div>
+                </div>
+
+                {/* -------------------- shopCart ----------------------*/}
+
+                <div className="shopCart">
+                  <div className="shopCart__title">Koszyk</div>
+                  {buyPotionQty === 0 ? (
+                    <div className="empty">
+                      Double-click na miksturę, aby dodać do koszyka.
+                    </div>
+                  ) : (
+                    <>
+                      <div className="shopCart__row">
+                        <div>Mikstura leczenia</div>
+                        <div>x{buyPotionQty}</div>
+                        <div>
+                          <strong>{buyTotal} gold</strong>
+                        </div>
+                      </div>
+
+                      {shopError && (
+                        <div className="shopError">{shopError}</div>
+                      )}
+
+                      <div className="shopCart__actions">
+                        <button
+                          className="btn btn--primary"
+                          onClick={() => {
+                            if (player.gold < buyTotal) {
+                              setShopError("Masz za mało golda na ten zakup.");
+                              return;
+                            }
+                            buyPotion(buyPotionQty);
+                            setBuyPotionQty(0);
+                            setShopError(null);
+                          }}
+                        >
+                          Kup
+                        </button>
+
+                        <button
+                          className="btn"
+                          onClick={() => {
+                            setBuyPotionQty(0);
+                            setShopError(null);
+                          }}
+                        >
+                          Wyczyść koszyk
+                        </button>
+                      </div>
+                      <div className="capMini">
+                        <div className="capMini__row">
+                          <span>Plecak</span>
+                          <strong>
+                            {inventory.length}/{player.inventoryCap}
+                          </strong>
+                        </div>
+
+                        <div className="capMini__row capMini__row--price">
+                          <span>+1 slot</span>
+                          <strong>{nextSlotPrice()} gold</strong>
+                        </div>
+
+                        <button
+                          className="btn btn--mini"
+                          onClick={buyInventorySlot}
+                        >
+                          Kup slot
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
-        </aside>
+          </section>
+        )}
+        {/* -------------------------  MAIN: QUEST --------------------------------- */}
+        {view === "quest" && (
+          <section className="panel panel--center panel--span2">
+            <div className="panel__head">
+              <h2 className="panel__title">Questy</h2>
+              <p className="panel__hint">Wkrótce.</p>
+            </div>
+
+            <div className="empty">Ten widok jest jeszcze pusty.</div>
+          </section>
+        )}
       </main>
 
       <footer className="footer">THEOTHERSITE © 2026 RPG Lite</footer>

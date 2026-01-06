@@ -11,6 +11,7 @@ export function createNewPlayer(): Stats {
     luck: 0,
     gold: 50,
     potions: 1,
+    inventoryCap: 20,
   };
 }
 

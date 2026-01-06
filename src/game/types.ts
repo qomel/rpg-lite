@@ -15,6 +15,7 @@ export type Stats = {
   armor: number;
   luck: number;
   gold: number;
+  inventoryCap: number;
 };
 
 export type MobKind = "mob" | "boss";
