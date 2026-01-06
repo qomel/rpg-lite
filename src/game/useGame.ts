@@ -9,7 +9,12 @@ import type {
   Stats,
 } from "./types";
 import { startFight, attackTurn } from "./combat";
-import { expToNext, maxMobLevelAllowed } from "./balance";
+import {
+  POTION_HEAL_HP,
+  POTION_PRICE_GOLD,
+  expToNext,
+  maxMobLevelAllowed,
+} from "./balance";
 type Phase = "ready" | "inFight" | "cooldown";
 
 type GearState = {
@@ -20,7 +25,8 @@ type GearState = {
 type GearAction =
   | { type: "ADD_ITEM"; item: Item }
   | { type: "EQUIP"; itemId: string }
-  | { type: "UNEQUIP"; slot: ItemSlot };
+  | { type: "UNEQUIP"; slot: ItemSlot }
+  | { type: "REMOVE_ITEM"; itemId: string };
 
 function gearReducer(state: GearState, action: GearAction): GearState {
   switch (action.type) {
@@ -72,6 +78,14 @@ function gearReducer(state: GearState, action: GearAction): GearState {
           ? state.inventory
           : [item, ...state.inventory],
         equipment: nextEquipment,
+      };
+    }
+
+    case "REMOVE_ITEM": {
+      if (!state.inventory.some((i) => i.id === action.itemId)) return state;
+      return {
+        ...state,
+        inventory: state.inventory.filter((i) => i.id !== action.itemId),
       };
     }
 
@@ -272,6 +286,55 @@ export function useGame() {
     dispatchGear({ type: "UNEQUIP", slot });
   }
 
+  function sellItem(itemId: string) {
+    const it = gear.inventory.find((i) => i.id === itemId);
+    if (!it) return;
+
+    dispatchGear({ type: "REMOVE_ITEM", itemId });
+    setPlayer((p) => ({ ...p, gold: p.gold + (it.sellPrice ?? 0) }));
+    setLog((prev) => [
+      `Sprzedano: ${it.name} (+${it.sellPrice} gold).`,
+      ...prev,
+    ]);
+  }
+
+  function buyPotion(qty: number = 1) {
+    const q = Math.max(1, Math.floor(qty));
+    const cost = POTION_PRICE_GOLD * q;
+
+    setPlayer((p) => {
+      if (p.gold < cost) {
+        setLog((prev) => [`Masz niewystarczająco pieniędzy`, ...prev]);
+        return p;
+      }
+      setLog((prev) => [`Kupiono miksturę x${q} (=${cost} gold).`, ...prev]);
+      return { ...p, gold: p.gold - cost, potions: (p.potions ?? 0) + q };
+    });
+  }
+
+  function usePotion() {
+    if (phase === "cooldown") return;
+
+    setPlayer((p) => {
+      if ((p.potions ?? 0) <= 0) {
+        setLog((prev) => ["Nie masz mikstrur.", ...prev]);
+        return p;
+      }
+      if (p.hp <= 0) return p;
+      if (p.hp >= p.maxHp) {
+        setLog((prev) => ["Masz pełne HP.", ...prev]);
+        return p;
+      }
+      const after = Math.min(p.maxHp, p.hp + POTION_HEAL_HP);
+      const healed = after - p.hp;
+
+      setLog((prev) => [
+        `Użytko mikstury: +${healed} HP (${after}/${p.maxHp}).`,
+        ...prev,
+      ]);
+      return { ...p, potions: (p.potions ?? 0) - 1, hp: after };
+    });
+  }
   return {
     player,
     mobs: MOBS,
@@ -291,5 +354,10 @@ export function useGame() {
     inventory: gear.inventory,
     equipment: gear.equipment,
     maxAllowedMobLevel: maxMobLevelAllowed(player.level),
+    sellItem,
+    buyPotion,
+    usePotion,
+    potionPrice: POTION_PRICE_GOLD,
+    potionHeal: POTION_HEAL_HP,
   };
 }

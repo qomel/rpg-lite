@@ -663,3 +663,12 @@
 .ttCompare__d--neg {
   color: #e74c3c;
 }
+.shopRow {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.shopRow .btn {
+  flex: 1;
+}

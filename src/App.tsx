@@ -133,6 +133,11 @@ export default function App() {
     unequip,
     expToNext,
     maxAllowedMobLevel,
+    sellItem,
+    buyPotion,
+    usePotion,
+    potionPrice,
+    potionHeal,
   } = useGame();
 
   const [enemyTab, setEnemyTab] = useState<"mobs" | "boss">("mobs");
@@ -189,6 +194,35 @@ export default function App() {
           <div className="kv">
             <span className="kv__k">Gold</span>
             <span className="kv__v">{player.gold}</span>
+          </div>
+          <div className="kv">
+            <span className="kv__k">Mikstury</span>
+            <span className="kv__v">{player.potions}</span>
+          </div>
+          <p>lewym sprzedajesz item (testowane)</p>
+          <div className="shopRow">
+            <button
+              className="btn"
+              onClick={() => buyPotion(1)}
+              disabled={player.gold < potionPrice}
+              title={`Kup miksturę za ${potionPrice} gold`}
+            >
+              Kup miksturę ({potionPrice}g)
+            </button>
+
+            <button
+              className="btn"
+              onClick={usePotion}
+              disabled={
+                phase === "cooldown" ||
+                player.hp <= 0 ||
+                player.hp >= player.maxHp ||
+                player.potions <= 0
+              }
+              title={`Użyj mikstury: +${potionHeal} HP`}
+            >
+              Użyj (+{potionHeal} HP)
+            </button>
           </div>
 
           <div className="statsline">
@@ -306,6 +340,10 @@ export default function App() {
                         role="button"
                         tabIndex={0}
                         aria-label={`${it.name}`}
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          sellItem(it.id);
+                        }}
                       />
                       <div className="orbHoverName">
                         {ctrlDown ? (

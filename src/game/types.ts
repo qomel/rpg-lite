@@ -11,6 +11,7 @@ export type Stats = {
   exp: number;
   level: number;
   strenght: number;
+  potions: number;
   armor: number;
   luck: number;
   gold: number;
