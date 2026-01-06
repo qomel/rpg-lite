@@ -1,6 +1,6 @@
 import "./App.css";
 import { useGame } from "./game/useGame";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BOSSES } from "./game/engine";
 import { MobSprite } from "./game/mobSprite";
 import { mobColor } from "./game/mobs/mobColor";
@@ -8,23 +8,6 @@ import { mobColor } from "./game/mobs/mobColor";
 function rarityClass(r: string) {
   return `orb orb--${r}`;
 }
-
-// function formatItemStats(
-//   stats?: Partial<{
-//     maxHp: number;
-//     strenght: number;
-//     armor: number;
-//     luck: number;
-//   }>
-// ) {
-//   if (!stats) return "";
-//   const parts: string[] = [];
-//   if (stats.strenght) parts.push(`STR +${stats.strenght}`);
-//   if (stats.armor) parts.push(`ARM +${stats.armor}`);
-//   if (stats.maxHp) parts.push(`HP +${stats.maxHp}`);
-//   if (stats.luck) parts.push(`LUCK +${stats.luck}`);
-//   return parts.join(" • ");
-// }
 
 function slotPl(slot: string) {
   if (slot === "weapon") return "Broń";
@@ -53,48 +36,6 @@ function statsLinesPl(stats?: any) {
   if (stats.luck) lines.push({ k: "Szczęście", v: stats.luck });
   return lines;
 }
-
-/**
- * Ustawia klasę pozycjonowania tooltipa, jeśli wychodzi poza ekran.
- * - default: środek
- * - jeśli overflow w lewo: align-left (tooltip rośnie w prawo)
- * - jeśli overflow w prawo: align-right (tooltip rośnie w lewo)
- */
-
-// function flipTooltipIfNeeded(wrapEl: HTMLElement | null) {
-//   if (!wrapEl) return;
-
-//   const tt = wrapEl.querySelector<HTMLElement>(".orbHoverName");
-//   if (!tt) return;
-
-//   wrapEl.classList.remove("orbWrap--tt-left", "orbWrap--tt-right");
-
-//   const prevOpcaity = tt.style.opacity;
-//   const prevVisibility = tt.style.visibility;
-//   const prevPointer = tt.style.pointerEvents;
-
-//   tt.style.opacity = "1";
-//   tt.style.visibility = "hidden";
-//   tt.style.pointerEvents = "none";
-
-//   void tt.offsetWidth;
-//   const tooltipWidth = tt.offsetWidth;
-//   const wrapRect = wrapEl.getBoundingClientRect();
-
-//   const pad = 8;
-//   const centerX = wrapRect.left + wrapRect.width / 2;
-
-//   // jeśli wyśrodkowny tooltip nie mieście się w
-//   if (centerX - tooltipWidth / 2 < pad) {
-//     wrapEl.classList.add("orbWrap--tt-left");
-//   } else if (centerX + tooltipWidth / 2 > window.innerWidth - pad) {
-//     wrapEl.classList.add("orbWrap--tt-right");
-//   }
-
-//   tt.style.visibility = prevVisibility;
-//   tt.style.opacity = prevOpcaity;
-//   tt.style.pointerEvents = prevPointer;
-// }
 
 function showTooltip(e: any) {
   const wrap = e.currentTarget as HTMLElement;
@@ -140,6 +81,38 @@ function hideTooltip(e: any) {
   tt.classList.remove("tt--open");
 }
 
+// type StatKey = "strenght" | "armor" | "maxHp" | "luck";
+
+// type DiffRow = {
+//   k: StatKey;
+//   a: number; // plecak
+//   b: number; // zalozone
+//   d: number; // a-b
+// };
+
+function getStat(stats: any, key: string) {
+  return Number(stats?.[key] ?? 0);
+}
+
+function diffRows(a: any, b: any) {
+  const keys = ["strenght", "armor", "maxHp", "luck"] as const;
+  return keys
+    .map((k) => {
+      const av = getStat(a, k);
+      const bv = getStat(b, k);
+      return { k, a: av, b: bv, d: av - bv };
+    })
+    .filter((r) => r.a !== 0 || r.b !== 0);
+}
+
+function statLabelPl(k: string) {
+  if (k === "strenght") return "Siła";
+  if (k === "armor") return "Pancerz";
+  if (k === "maxHp") return "Zdrowie";
+  if (k === "luck") return "Szczęście";
+  return k;
+}
+
 export default function App() {
   const {
     player,
@@ -160,10 +133,35 @@ export default function App() {
     unequip,
     expToNext,
     maxAllowedMobLevel,
+    sellItem,
+    buyPotion,
+    usePotion,
+    potionPrice,
+    potionHeal,
   } = useGame();
 
   const [enemyTab, setEnemyTab] = useState<"mobs" | "boss">("mobs");
   const enemies = enemyTab === "mobs" ? mobs : BOSSES;
+
+  // Porównywarka
+
+  const [ctrlDown, setCtrlDown] = useState(false);
+  useEffect(() => {
+    const onDown = (e: KeyboardEvent) => {
+      if (e.key === "Control") setCtrlDown(true);
+    };
+    const onUp = (e: KeyboardEvent) => {
+      if (e.key === "Control") setCtrlDown(false);
+    };
+
+    window.addEventListener("keydown", onDown);
+    window.addEventListener("keyup", onUp);
+
+    return () => {
+      window.removeEventListener("keydown", onDown);
+      window.removeEventListener("keyup", onUp);
+    };
+  }, []);
 
   return (
     <div className="app">
@@ -197,6 +195,35 @@ export default function App() {
             <span className="kv__k">Gold</span>
             <span className="kv__v">{player.gold}</span>
           </div>
+          <div className="kv">
+            <span className="kv__k">Mikstury</span>
+            <span className="kv__v">{player.potions}</span>
+          </div>
+          <p>lewym sprzedajesz item (testowane)</p>
+          <div className="shopRow">
+            <button
+              className="btn"
+              onClick={() => buyPotion(1)}
+              disabled={player.gold < potionPrice}
+              title={`Kup miksturę za ${potionPrice} gold`}
+            >
+              Kup miksturę ({potionPrice}g)
+            </button>
+
+            <button
+              className="btn"
+              onClick={usePotion}
+              disabled={
+                phase === "cooldown" ||
+                player.hp <= 0 ||
+                player.hp >= player.maxHp ||
+                player.potions <= 0
+              }
+              title={`Użyj mikstury: +${potionHeal} HP`}
+            >
+              Użyj (+{potionHeal} HP)
+            </button>
+          </div>
 
           <div className="statsline">
             <span className="statsline__label">Stats</span>
@@ -217,6 +244,7 @@ export default function App() {
                     className="orbWrap"
                     key={slot}
                     onMouseEnter={showTooltip}
+                    onMouseMove={showTooltip}
                     onMouseLeave={hideTooltip}
                   >
                     <div className="orbLabel">{slot}</div>
@@ -296,6 +324,7 @@ export default function App() {
                       className="orbWrap"
                       key={it.id}
                       onMouseEnter={showTooltip}
+                      onMouseMove={showTooltip}
                       onMouseLeave={hideTooltip}
                     >
                       <div
@@ -311,30 +340,119 @@ export default function App() {
                         role="button"
                         tabIndex={0}
                         aria-label={`${it.name}`}
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          sellItem(it.id);
+                        }}
                       />
                       <div className="orbHoverName">
-                        <div className="tt__top">
-                          <div className="tt__title">
-                            {it.name}{" "}
-                            <span className="tt__type">
-                              ({slotPl(it.slot)})
-                            </span>
-                          </div>
-                          <div className="tt__rarity">
-                            {rarityPl(it.rarity)}
-                          </div>
-                        </div>
+                        {ctrlDown ? (
+                          (() => {
+                            const equipped = equipment[it.slot];
+                            const rows = diffRows(it.stats, equipped?.stats);
 
-                        <div className="tt__stats">
-                          {statsLinesPl(it.stats).map((s) => (
-                            <div className="tt__statRow" key={s.k}>
-                              <span className="tt__statK">{s.k}:</span>
-                              <span className="tt__statV">{s.v}</span>
+                            return (
+                              <div className="ttCompare">
+                                <div className="ttCompare__cols">
+                                  <div className="ttCompare__col">
+                                    <div className="ttCompare__head">
+                                      Plecak
+                                    </div>
+                                    <div className="tt__title">
+                                      {it.name}{" "}
+                                      <span className="tt__type">
+                                        ({slotPl(it.slot)})
+                                      </span>
+                                    </div>
+                                    <div className="tt__rarity">
+                                      {rarityPl(it.rarity)}
+                                    </div>
+                                  </div>
+
+                                  <div className="ttCompare__col">
+                                    <div className="ttCompare__head">
+                                      Założone
+                                    </div>
+                                    {equipped ? (
+                                      <>
+                                        <div className="tt__title">
+                                          {equipped.name}
+                                        </div>
+                                        <div className="tt__rarity">
+                                          {rarityPl(equipped.rarity)}
+                                        </div>
+                                      </>
+                                    ) : (
+                                      <div className="tt__muted">Puste</div>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div className="ttCompare__stats">
+                                  {rows.map((r) => (
+                                    <div className="ttCompare__row" key={r.k}>
+                                      <span className="ttCompare__k">
+                                        {statLabelPl(r.k)}
+                                      </span>
+                                      <span className="ttCompare__v">
+                                        {r.a}
+                                      </span>
+                                      <span
+                                        className={`ttCompare__d ${
+                                          r.d > 0
+                                            ? "ttCompare__d--pos"
+                                            : r.d < 0
+                                            ? "ttCompare__d--neg"
+                                            : ""
+                                        }`}
+                                      >
+                                        {r.d > 0 ? `+${r.d}` : `${r.d}`}
+                                      </span>
+                                      <span className="ttCompare__v">
+                                        {equipped ? r.b : 0}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+
+                                <div className="tt__lvl">
+                                  LVL {it.requiredLevel}
+                                </div>
+                              </div>
+                            );
+                          })()
+                        ) : (
+                          <>
+                            <div className="tt__top">
+                              <div className="tt__title">
+                                {it.name}{" "}
+                                <span className="tt__type">
+                                  ({slotPl(it.slot)})
+                                </span>
+                              </div>
+                              <div className="tt__rarity">
+                                {rarityPl(it.rarity)}
+                              </div>
                             </div>
-                          ))}
-                        </div>
 
-                        <div className="tt__lvl">LVL {it.requiredLevel}</div>
+                            <div className="tt__stats">
+                              {statsLinesPl(it.stats).map((s) => (
+                                <div className="tt__statRow" key={s.k}>
+                                  <span className="tt__statK">{s.k}:</span>
+                                  <span className="tt__statV">{s.v}</span>
+                                </div>
+                              ))}
+                            </div>
+
+                            <div className="tt__lvl">
+                              LVL {it.requiredLevel}
+                            </div>
+
+                            <div className="tt__muted" style={{ marginTop: 8 }}>
+                              Przytrzymaj CTRL, aby porównać z założonym.
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
                   );

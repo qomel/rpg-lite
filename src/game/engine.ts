@@ -10,6 +10,7 @@ export function createNewPlayer(): Stats {
     armor: 0,
     luck: 0,
     gold: 50,
+    potions: 1,
   };
 }
 

@@ -41,3 +41,7 @@ export function goldRewardForMob(mobLevel: number): {
 export function maxMobLevelAllowed(playerLevel: number): number {
   return playerLevel + (6 + Math.floor(playerLevel / 3));
 }
+
+export const POTION_PRICE_GOLD = 30;
+
+export const POTION_HEAL_HP = 45;
