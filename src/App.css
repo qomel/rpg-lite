@@ -672,3 +672,205 @@
 .shopRow .btn {
   flex: 1;
 }
+.panel--span2 {
+  grid-column: span 2;
+}
+
+.topSwitch {
+  display: flex;
+  gap: 10px;
+  margin: 0 0 12px;
+}
+
+.topSwitch__btn {
+  width: 72px;
+  height: 72px;
+  border: 1px solid #ddd;
+  background: #fff;
+  border-radius: 12px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  padding: 8px;
+  transition: transform 120ms ease, box-shadow 120ms ease,
+    border-color 120ms ease;
+}
+
+.topSwitch__btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  border-color: #cfcfcf;
+}
+
+.topSwitch__btn.is-active {
+  border-color: #111;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.12);
+}
+
+.topSwitch__label {
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.6px;
+}
+
+.shopBanner {
+  border: 1px dashed #ddd;
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.shopBanner__img {
+  width: 120px;
+  height: 72px;
+  border-radius: 12px;
+  border: 1px solid #eee;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.shopBanner__title {
+  font-weight: 800;
+}
+
+.shopBanner__sub {
+  opacity: 0.75;
+  font-size: 13px;
+}
+
+.shopGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.shopPanel {
+  border: 1px solid #eee;
+  border-radius: 14px;
+  padding: 12px;
+  min-height: 260px;
+}
+
+.shopPanel__title {
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.shopSellSlot {
+  border: 1px dashed #ddd;
+  border-radius: 14px;
+  min-height: 200px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.shopSellSlot__empty {
+  opacity: 0.7;
+}
+
+.shopSellSlot__content {
+  width: 100%;
+  text-align: left;
+}
+
+.shopSellSlot__name {
+  font-weight: 900;
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.shopSellSlot__meta {
+  opacity: 0.75;
+  margin-bottom: 8px;
+}
+
+.shopSellSlot__price {
+  margin-bottom: 10px;
+}
+
+.shopSellSlot__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.shopBuyList {
+  display: grid;
+  gap: 10px;
+}
+
+.shopBuyItem {
+  border: 1px solid #f1f1f1;
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.shopBuyItem__name {
+  font-weight: 900;
+  margin-bottom: 4px;
+}
+
+.shopBuyItem__meta {
+  opacity: 0.75;
+  margin-bottom: 10px;
+}
+
+.shopBuyItem__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.shopBuyItem__price {
+  opacity: 0.9;
+}
+.shopSellBar {
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.shopCart {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed #eee;
+}
+
+.shopCart__title {
+  font-weight: 900;
+  margin-bottom: 8px;
+}
+
+.shopCart__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid #f1f1f1;
+  border-radius: 12px;
+  margin-bottom: 10px;
+}
+
+.shopCart__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.shopError {
+  margin: 6px 0 10px;
+  font-weight: 700;
+}

@@ -286,6 +286,18 @@ export function useGame() {
     dispatchGear({ type: "UNEQUIP", slot });
   }
 
+  function takeInventoryItem(itemId: string): Item | null {
+    const it = gear.inventory.find((i) => i.id === itemId);
+    if (!it) return null;
+
+    dispatchGear({ type: "REMOVE_ITEM", itemId });
+    return it;
+  }
+
+  function putInventoryItem(item: Item) {
+    dispatchGear({ type: "ADD_ITEM", item });
+  }
+
   function sellItem(itemId: string) {
     const it = gear.inventory.find((i) => i.id === itemId);
     if (!it) return;
@@ -294,6 +306,18 @@ export function useGame() {
     setPlayer((p) => ({ ...p, gold: p.gold + (it.sellPrice ?? 0) }));
     setLog((prev) => [
       `Sprzedano: ${it.name} (+${it.sellPrice} gold).`,
+      ...prev,
+    ]);
+  }
+
+  function sellItems(items: Item[]) {
+    if (!items.length) return;
+
+    const total = items.reduce((s, it) => s + (it.sellPrice ?? 0), 0);
+
+    setPlayer((p) => ({ ...p, gold: p.gold + total }));
+    setLog((prev) => [
+      `Sprzedano${items.length} przedmiotów (+${total} gold)`,
       ...prev,
     ]);
   }
@@ -359,5 +383,8 @@ export function useGame() {
     usePotion,
     potionPrice: POTION_PRICE_GOLD,
     potionHeal: POTION_HEAL_HP,
+    sellItems,
+    takeInventoryItem,
+    putInventoryItem,
   };
 }
