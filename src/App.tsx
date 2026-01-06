@@ -19,7 +19,7 @@ function slotPl(slot: string) {
 
 function rarityPl(r: string) {
   const map: Record<string, string> = {
-    comon: "Pospolity",
+    common: "Pospolity",
     uncommon: "Niepospolity",
     rare: "Rzadki",
     epic: "Epicki",
@@ -133,14 +133,16 @@ export default function App() {
     equipItem,
     unequip,
     expToNext,
-    maxAllowedMobLevel,
     buyPotion,
+    maxAllowedMobLevel,
     usePotion,
     potionPrice,
     potionHeal,
     sellItems,
     takeInventoryItem,
     putInventoryItem,
+    nextSlotPrice,
+    buyInventorySlot,
   } = useGame();
 
   const [sellBox, setSellBox] = useState<Item[]>([]);
@@ -200,7 +202,7 @@ export default function App() {
   }, []);
 
   return (
-    <div className="app">
+    <div className={`app theme--${view}`}>
       <header className="app__header">
         <h1 className="app__title">RPG Lite</h1>
         <p className="app__subtitle">Turówka, Loot RNG</p>
@@ -235,7 +237,10 @@ export default function App() {
       <main className="layout">
         {/* LEFT: PLAYER */}
         <section className="panel">
-          <h2 className="panel__title">Player</h2>
+          <div className="panelTitleRow">
+            <h2 className="panel__title">Player</h2>
+            <div className="panelTitlePill">Lv {player.level}</div>
+          </div>
 
           <div className="kv">
             <span className="kv__k">HP</span>
@@ -245,12 +250,22 @@ export default function App() {
           </div>
 
           <div className="kv">
-            <span className="kv__k">Level</span>
-            <span className="kv__v">{player.level}</span>
-            <span className="kv__k">EXP</span>
-            <span className="kv__v">
-              {player.exp} / {expToNext}
-            </span>
+            <div className="expBarWrap">
+              <div className="expBarTop">
+                <span>EXP</span>
+                <strong>
+                  {player.exp} / {expToNext}
+                </strong>
+              </div>
+              <div className="expBar">
+                <div
+                  className="expBar__fill"
+                  style={{
+                    width: `${Math.min(100, (player.exp / expToNext) * 100)}%`,
+                  }}
+                />
+              </div>
+            </div>
           </div>
 
           <div className="kv">
@@ -261,23 +276,6 @@ export default function App() {
             <span className="kv__k">Mikstury</span>
             <span className="kv__v">{player.potions}</span>
           </div>
-          <p>lewym sprzedajesz item (testowane)</p>
-          <div className="shopRow">
-            <button
-              className="btn"
-              onClick={usePotion}
-              disabled={
-                phase === "cooldown" ||
-                player.hp <= 0 ||
-                player.hp >= player.maxHp ||
-                player.potions <= 0
-              }
-              title={`Użyj mikstury: +${potionHeal} HP`}
-            >
-              Użyj (+{potionHeal} HP)
-            </button>
-          </div>
-
           <div className="statsline">
             <span className="statsline__label">Stats</span>
             <span className="statsline__value">
@@ -364,7 +362,9 @@ export default function App() {
 
           {/* BACKPACK */}
           <div className="invBlock">
-            <div className="invTitle">Plecak ({inventory.length})</div>
+            <div className="invTitle">
+              Plecak ({inventory.length}/{player.inventoryCap})
+            </div>
 
             {inventory.length === 0 ? (
               <div className="empty">Brak itemów. Farm loot z mobów.</div>
@@ -783,9 +783,10 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* -------------------- shopCart ----------------------*/}
+
                 <div className="shopCart">
                   <div className="shopCart__title">Koszyk</div>
-
                   {buyPotionQty === 0 ? (
                     <div className="empty">
                       Double-click na miksturę, aby dodać do koszyka.
@@ -828,6 +829,26 @@ export default function App() {
                           }}
                         >
                           Wyczyść koszyk
+                        </button>
+                      </div>
+                      <div className="capMini">
+                        <div className="capMini__row">
+                          <span>Plecak</span>
+                          <strong>
+                            {inventory.length}/{player.inventoryCap}
+                          </strong>
+                        </div>
+
+                        <div className="capMini__row capMini__row--price">
+                          <span>+1 slot</span>
+                          <strong>{nextSlotPrice()} gold</strong>
+                        </div>
+
+                        <button
+                          className="btn btn--mini"
+                          onClick={buyInventorySlot}
+                        >
+                          Kup slot
                         </button>
                       </div>
                     </>

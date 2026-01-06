@@ -1,4 +1,10 @@
+html,
+body,
+#root {
+  height: 100%;
+}
+
 body {
   margin: 0;
-  background: #fafafa;
+  overflow: hidden; /* klucz: brak scrolla strony */
 }

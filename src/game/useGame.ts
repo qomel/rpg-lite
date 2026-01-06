@@ -295,6 +295,10 @@ export function useGame() {
   }
 
   function putInventoryItem(item: Item) {
+    if (gear.inventory.length >= player.inventoryCap) {
+      setLog((prev) => ["Brak miejsca w plecaku.", ...prev]);
+      return;
+    }
     dispatchGear({ type: "ADD_ITEM", item });
   }
 
@@ -336,6 +340,34 @@ export function useGame() {
     });
   }
 
+  const INVENTORY_CAP_START = 20;
+  const INVENTORY_CAP_MAX = 40;
+
+  // ----------------- Cena za kolejny slot - rośnie mocno
+  function nextSlotPrice(currentCap: number) {
+    const base = 250;
+    const step = Math.max(0, currentCap - INVENTORY_CAP_START);
+    return Math.round(base * Math.pow(1.35, step));
+  }
+
+  function buyInventorySlot() {
+    setPlayer((p) => {
+      if (p.inventoryCap >= INVENTORY_CAP_MAX) {
+        setLog((prev) => ["Osiągnieto maksymalną pojemność plecaka.", ...prev]);
+        return p;
+      }
+
+      const price = nextSlotPrice(p.inventoryCap);
+      if (p.gold < price) {
+        setLog((prev) => [`Za mało golda. Potrzebujesz ${price}.`, ...prev]);
+        return p;
+      }
+
+      setLog((prev) => [`Kupiono +1 slot plecaka (-${price} gold)`, ...prev]);
+      return { ...p, gold: p.gold - price, inventoryCap: p.inventoryCap + 1 };
+    });
+  }
+
   function usePotion() {
     if (phase === "cooldown") return;
 
@@ -359,6 +391,7 @@ export function useGame() {
       return { ...p, potions: (p.potions ?? 0) - 1, hp: after };
     });
   }
+
   return {
     player,
     mobs: MOBS,
@@ -386,5 +419,7 @@ export function useGame() {
     sellItems,
     takeInventoryItem,
     putInventoryItem,
+    nextSlotPrice: () => nextSlotPrice(player.inventoryCap),
+    buyInventorySlot,
   };
 }
