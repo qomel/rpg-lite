@@ -15,6 +15,18 @@ import {
   expToNext,
   maxMobLevelAllowed,
 } from "./balance";
+import {
+  clearRoom,
+  createStage,
+  markDiscovered,
+  moveWithinStage,
+  type Dir,
+  type MapId,
+  type PlayerPos,
+  type Room,
+  type RoomKind,
+  type Stage,
+} from "./dungeon";
 type Phase = "ready" | "inFight" | "cooldown";
 
 type GearState = {
@@ -95,11 +107,29 @@ function gearReducer(state: GearState, action: GearAction): GearState {
 }
 
 export function useGame() {
+  const caveMobIdsByStage: Record<1 | 2 | 3 | 4, string[]> = {
+    1: ["slime"],
+    2: ["bat"],
+    3: ["rat", "spider"],
+    4: ["ogre"],
+  };
+
   const [player, setPlayer] = useState(createNewPlayer());
   const [selectedMobId, setSelectedMobId] = useState<string>(MOBS[0].id);
   const [fight, setFight] = useState<FightState>(() => startFight(MOBS[0]));
   const [phase, setPhase] = useState<Phase>("ready");
   const [log, setLog] = useState<string[]>([]);
+
+  // ----------------- DUNGEON: MAPA / STAGE / PLACE (Feature 1)
+  const [dungeon, setDungeon] = useState<{ stage: Stage; pos: PlayerPos }>(
+    () => {
+      const st = createStage("cave", 1, 5, { mobIds: caveMobIdsByStage[1] });
+      return {
+        stage: st,
+        pos: { mapId: "cave", stage: 1, roomId: st.spawnId },
+      };
+    }
+  );
   const [gear, dispatchGear] = useReducer(gearReducer, {
     inventory: [],
     equipment: {},
@@ -116,8 +146,18 @@ export function useGame() {
     [selectedMobId]
   );
 
+  const currentRoom: Room = useMemo(
+    () => dungeon.stage.rooms[dungeon.pos.roomId],
+    [dungeon.stage.rooms, dungeon.pos.roomId]
+  );
+
   const selectionLocked = phase === "inFight" || phase === "cooldown";
-  const canAttack = !turnLocked && phase !== "cooldown" && player.hp > 0; // Atakuj dostępny także po zakończeniu walki (respawn na klik)
+  const canAttack =
+    !turnLocked &&
+    phase !== "cooldown" &&
+    player.hp > 0 &&
+    currentRoom.kind === "mob" &&
+    (fight.mobHp > 0 || !currentRoom.cleared);
 
   // start cooldown timer
   useEffect(() => {
@@ -172,6 +212,41 @@ export function useGame() {
     setLog([`Wybrano: ${mob.name}. Kliknij "Atakuj, żeby rozpoczać walkę`]);
   }
 
+  function roomMob(room: Room): Mob {
+    const id = room.mobId ?? "slime";
+    return MOBS.find((m) => m.id === id) ?? MOBS[0];
+  }
+
+  function enterRoom(room: Room) {
+    if (room.kind !== "mob" || room.cleared) {
+      return;
+    }
+    const mob = roomMob(room);
+    setSelectedMobId(mob.id);
+    setFight(startFight(mob));
+    setPhase("ready");
+    setLog([`Komnata: ${mob.name}. Kliknij "Atakuj" aby rozpocząć walkę.`]);
+  }
+
+  function move(dir: Dir) {
+    if (selectionLocked) return;
+
+    setDungeon((d) => {
+      const nextPos = moveWithinStage(d.stage, d.pos, dir);
+      if (nextPos.roomId === d.pos.roomId) return d;
+
+      const nextStage = markDiscovered(d.stage, nextPos.roomId);
+      // hook wejścia do komnaty (mob/loot itd.) robimy po setState, ale
+      // do wyboru moba potrzebujemy danych już teraz.
+      const nextRoom = nextStage.rooms[nextPos.roomId];
+
+      // side-effecty (fight/log) poza reducerem
+      queueMicrotask(() => enterRoom(nextRoom));
+
+      return { stage: nextStage, pos: nextPos };
+    });
+  }
+
   // button Atakuj
   function attack() {
     // gurady anyspam click
@@ -210,6 +285,13 @@ export function useGame() {
       // domykanie po zakończeniu
       if (res.result.finished) {
         if (res.result.win === true) {
+          // jeśli wygraliśmy w komnacie z mobem, oznacz ją jako wyczyszczoną
+          if (currentRoom.kind === "mob" && !currentRoom.cleared) {
+            setDungeon((d) => ({
+              ...d,
+              stage: clearRoom(d.stage, d.pos.roomId),
+            }));
+          }
           setPhase("ready");
         } else if (res.result.win === false) {
           setPhase("cooldown");
@@ -394,6 +476,12 @@ export function useGame() {
 
   return {
     player,
+    dungeon: {
+      stage: dungeon.stage,
+      pos: dungeon.pos,
+      currentRoom,
+      move,
+    },
     mobs: MOBS,
     selectedMob,
     fight,
