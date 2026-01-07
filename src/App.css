@@ -3,6 +3,78 @@ body,
 #root {
   height: 100%;
 }
+
+/* ----------------- DUNGEON UI (MAPA/STAGE/PLACE) ----------------- */
+.dungeonGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.dungeonCell {
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  user-select: none;
+}
+
+.dungeonCell.is-unknown {
+  opacity: 0.55;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.dungeonCell.is-known {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.dungeonCell.is-here {
+  outline: 2px solid rgba(255, 255, 255, 0.7);
+  outline-offset: 2px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.dungeonCell.is-mob:not(.is-cleared) {
+  border-color: rgba(255, 120, 120, 0.35);
+}
+
+.dungeonCell.is-exit {
+  border-color: rgba(120, 255, 180, 0.35);
+}
+
+.dungeonCell.is-spawn {
+  border-color: rgba(120, 160, 255, 0.35);
+}
+
+.dungeonControls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.dungeonControls__row {
+  display: flex;
+  gap: 8px;
+}
+
+.roomBadge {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.08);
+  font-weight: 900;
+}
 body {
   margin: 0;
   overflow: hidden;

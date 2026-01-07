@@ -117,6 +117,7 @@ function statLabelPl(k: string) {
 export default function App() {
   const {
     player,
+    dungeon,
     mobs,
     selectedMob,
     fight,
@@ -155,7 +156,9 @@ export default function App() {
   const [enemyTab, setEnemyTab] = useState<"mobs" | "boss">("mobs");
   const enemies = enemyTab === "mobs" ? mobs : BOSSES;
 
-  const [view, setView] = useState<"mobs" | "shop" | "quest">("mobs");
+  const [view, setView] = useState<"mobs" | "dungeon" | "shop" | "quest">(
+    "dungeon"
+  );
 
   const sellBoxRef = useRef<Item[]>([]);
   const prevViewRef = useRef(view);
@@ -201,6 +204,18 @@ export default function App() {
     };
   }, []);
 
+  const stage = dungeon.stage;
+  const pos = dungeon.pos;
+  const currentRoom = dungeon.currentRoom;
+
+  function roomSymbol(kind: string, cleared?: boolean) {
+    if (kind === "spawn") return "S";
+    if (kind === "exit") return "E";
+    if (kind === "loot") return "L";
+    if (kind === "mob") return cleared ? "·" : "M";
+    return "·";
+  }
+
   return (
     <div className={`app theme--${view}`}>
       <header className="app__header">
@@ -209,6 +224,14 @@ export default function App() {
       </header>
       {/*  TOPSWITCH */}
       <div className="topSwitch">
+        <button
+          className={`topSwitch__btn ${view === "dungeon" ? "is-active" : ""}`}
+          onClick={() => setView("dungeon")}
+          type="button"
+        >
+          <div className="topSwitch__label">LOCH</div>
+        </button>
+
         <button
           className={`topSwitch__btn ${view === "shop" ? "is-active" : ""}`}
           onClick={() => setView("shop")}
@@ -523,6 +546,177 @@ export default function App() {
             )}
           </div>
         </section>
+
+        {view === "dungeon" && (
+          <>
+            {/* CENTER: FIGHT (zależnie od aktualnej komnaty) */}
+            <section className="panel panel--center">
+              <div className="fightTop">
+                <div className="fightPickWithIcon">
+                  <div className="fightPick__icon" aria-hidden="true">
+                    {currentRoom.kind === "mob" ? (
+                      <MobSprite
+                        id={selectedMob.icon}
+                        size={56}
+                        fps={2.5}
+                        color={mobColor(selectedMob.icon)}
+                      />
+                    ) : (
+                      <div className="roomBadge">
+                        {roomSymbol(currentRoom.kind, currentRoom.cleared)}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="fightPick">
+                    <div className="fightPick__label">Komnata</div>
+                    <div className="fightPick__name">
+                      {currentRoom.kind === "mob"
+                        ? selectedMob.name
+                        : currentRoom.kind === "spawn"
+                        ? "Wejście"
+                        : currentRoom.kind === "exit"
+                        ? "Wyjście"
+                        : currentRoom.kind === "loot"
+                        ? "Skarb"
+                        : "Pusto"}
+                    </div>
+
+                    <div className="fightPick__meta">
+                      {currentRoom.kind === "mob" ? (
+                        <>
+                          Mob HP: <strong>{fight.mobHp}</strong> /{" "}
+                          {selectedMob.maxHp} <span className="dot">•</span>{" "}
+                          Status: <strong>{statusLabel}</strong>
+                        </>
+                      ) : (
+                        <>
+                          Mapa: <strong>{stage.mapId.toUpperCase()}</strong>{" "}
+                          <span className="dot">•</span> Stage:{" "}
+                          <strong>S{stage.stage}</strong>{" "}
+                          <span className="dot">•</span> Pokój:{" "}
+                          <strong>{pos.roomId}</strong>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="fightActions">
+                  <button
+                    className="btn btn--primary"
+                    onClick={attack}
+                    disabled={!canAttack}
+                  >
+                    Atakuj
+                  </button>
+                </div>
+              </div>
+
+              <div className="divider" />
+
+              <div className="fightLog">
+                <div className="fightLog__title">Log</div>
+                {log.length === 0 ? (
+                  <div className="empty">
+                    Poruszaj się po mapie. Walka jest dostępna tylko w komnatach
+                    z mobem.
+                  </div>
+                ) : (
+                  <ul className="log">
+                    {log.map((line, i) => (
+                      <li key={i} className="log__item">
+                        {line}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {phase === "cooldown" && (
+                  <div className="defeatBox">
+                    <strong>Gracz został pokonany!</strong>
+                    <div>Powrót do walki za: {cooldownLeft}s</div>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            {/* RIGHT: MAPA 5x5 + sterowanie */}
+            <aside className="panel">
+              <div className="panelTitleRow">
+                <h2 className="panel__title">Mapa</h2>
+                <div className="panelTitlePill">
+                  {stage.mapId.toUpperCase()} S{stage.stage}
+                </div>
+              </div>
+
+              <div className="dungeonGrid" role="grid" aria-label="Mapa lochu">
+                {Array.from({ length: stage.size * stage.size }).map(
+                  (_, idx) => {
+                    const x = idx % stage.size;
+                    const y = Math.floor(idx / stage.size);
+                    const id = `${x},${y}` as `${number},${number}`;
+                    const r = stage.rooms[id];
+                    const isHere = id === pos.roomId;
+                    const known = r?.discovered;
+                    const cls = [
+                      "dungeonCell",
+                      isHere ? "is-here" : "",
+                      known ? "is-known" : "is-unknown",
+                      r?.kind ? `is-${r.kind}` : "",
+                      r?.cleared ? "is-cleared" : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ");
+
+                    return (
+                      <div key={id} className={cls} role="gridcell">
+                        {known ? roomSymbol(r.kind, r.cleared) : "?"}
+                      </div>
+                    );
+                  }
+                )}
+              </div>
+
+              <div className="dungeonControls">
+                <button
+                  className="btn btn--ghost"
+                  onClick={() => dungeon.move("up")}
+                  disabled={selectionLocked}
+                >
+                  ↑
+                </button>
+                <div className="dungeonControls__row">
+                  <button
+                    className="btn btn--ghost"
+                    onClick={() => dungeon.move("left")}
+                    disabled={selectionLocked}
+                  >
+                    ←
+                  </button>
+                  <button
+                    className="btn btn--ghost"
+                    onClick={() => dungeon.move("right")}
+                    disabled={selectionLocked}
+                  >
+                    →
+                  </button>
+                </div>
+                <button
+                  className="btn btn--ghost"
+                  onClick={() => dungeon.move("down")}
+                  disabled={selectionLocked}
+                >
+                  ↓
+                </button>
+
+                <p className="panel__hint" style={{ marginTop: 10 }}>
+                  Podczas walki poruszanie jest zablokowane.
+                </p>
+              </div>
+            </aside>
+          </>
+        )}
 
         {view === "mobs" && (
           <>
