@@ -21,10 +21,8 @@ import {
   markDiscovered,
   moveWithinStage,
   type Dir,
-  type MapId,
   type PlayerPos,
   type Room,
-  type RoomKind,
   type Stage,
 } from "./dungeon";
 type Phase = "ready" | "inFight" | "cooldown";
